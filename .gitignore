@@ -1,0 +1,66 @@
+# .NET
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Aa]ssets/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.sln.ide
+.vs/
+
+# Visual Studio
+.vscode/
+.vs/
+*.sln
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+*.nuspec
+project.lock.json
+
+# Visual Studio Code
+.vscode/
+.history/
+
+# ASP.NET
+wwwroot/lib/
+wwwroot/node_modules/
+
+# Logs
+*.log
+
+# Environment variables
+*.env
+
+# React
+# Dependency directories
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnp.*
+.pnp.js
+
+# Build outputs
+build/
+dist/
+coverage/
+*.tgz
+
+# React Native
+*.expo/
+.expo-shared/
+
+# Operating System files
+.DS_Store
+Thumbs.db
