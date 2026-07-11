@@ -22,18 +22,46 @@ export default function LoginPage() {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Login
-      </Typography>
-      <Paper sx={{ p: 4, maxWidth: 600 }}>
-        <Box component="form" onSubmit={handleSubmit}>
-          <TextField label="Email" type="email" fullWidth margin="normal" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-          <TextField label="Password" type="password" fullWidth margin="normal" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-          {error && <Typography color="error">{error}</Typography>}
-          <Button type="submit" variant="contained" sx={{ mt: 2 }}>Login</Button>
-        </Box>
-      </Paper>
+    <Box sx={{ minHeight: 'calc(100vh - 64px)', py: 8, backgroundColor: '#07090d', display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ width: '100%', maxWidth: 560, px: 2 }}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#ffffff' }}>
+          Login
+        </Typography>
+        <Paper sx={{ p: 4, backgroundColor: '#11151d', border: '1px solid rgba(255,255,255,0.12)' }} elevation={6}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              label="Email"
+              type="email"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+              autoComplete="email"
+              InputLabelProps={{ sx: { color: '#c4cdd8' } }}
+              InputProps={{ sx: { backgroundColor: '#0d1218', color: '#ffffff' } }}
+            />
+            <TextField
+              label="Password"
+              type="password"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+              autoComplete="current-password"
+              InputLabelProps={{ sx: { color: '#c4cdd8' } }}
+              InputProps={{ sx: { backgroundColor: '#0d1218', color: '#ffffff' } }}
+            />
+            {error && <Typography color="error" sx={{ mt: 1 }}>{error}</Typography>}
+            <Button type="submit" variant="contained" sx={{ mt: 3, width: '100%' }}>
+              Login
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
     </Box>
   );
 }

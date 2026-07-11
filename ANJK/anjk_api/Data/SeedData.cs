@@ -7,7 +7,7 @@ namespace anjk_api.Data
     {
         public static void Seed(AppDbContext context)
         {
-            if (context.Database.IsSqlServer() && context.AppUsers.Any())
+            if (context.AppUsers.Any())
             {
                 return;
             }
