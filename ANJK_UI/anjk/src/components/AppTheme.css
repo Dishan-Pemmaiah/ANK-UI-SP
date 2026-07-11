@@ -1,0 +1,64 @@
+:root {
+  --primary-bg: #000000;
+  --secondary-bg: #b30000;
+  --surface: #121212;
+  --surface-alt: #1b1b1b;
+  --text: #ffffff;
+  --text-muted: #c8c8c8;
+  --border: #3e3e3e;
+}
+
+body {
+  background-color: var(--primary-bg);
+  color: var(--text);
+}
+
+a {
+  color: var(--text);
+}
+
+button, .MuiButton-root {
+  text-transform: none;
+}
+
+.MuiPaper-root, .MuiCard-root {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.MuiTypography-root {
+  color: var(--text) !important;
+}
+
+.MuiAppBar-root {
+  background-color: var(--primary-bg) !important;
+}
+
+.MuiButton-contained {
+  background-color: var(--secondary-bg) !important;
+  color: var(--text) !important;
+}
+
+.MuiButton-text {
+  color: var(--text) !important;
+}
+
+.MuiTextField-root .MuiInputBase-root {
+  color: var(--text) !important;
+}
+
+.MuiInputLabel-root {
+  color: var(--text-muted) !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: var(--border) !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--secondary-bg) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--secondary-bg) !important;
+}
