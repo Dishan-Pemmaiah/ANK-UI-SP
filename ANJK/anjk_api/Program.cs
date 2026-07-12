@@ -76,8 +76,25 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+var baseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+
+var connectionBuilder = new Npgsql.NpgsqlConnectionStringBuilder(baseConnectionString);
+
+// Keep pooled connections fresh in managed runtimes where idle sockets can be dropped.
+if (!connectionBuilder.ContainsKey("Keepalive")) connectionBuilder.KeepAlive = 30;
+if (!connectionBuilder.ContainsKey("Command Timeout")) connectionBuilder.CommandTimeout = 60;
+if (!connectionBuilder.ContainsKey("Timeout")) connectionBuilder.Timeout = 15;
+if (!connectionBuilder.ContainsKey("Connection Idle Lifetime")) connectionBuilder.ConnectionIdleLifetime = 60;
+
+connectionBuilder.TcpKeepAlive = true;
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionBuilder.ConnectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.CommandTimeout((int)connectionBuilder.CommandTimeout);
+        npgsqlOptions.EnableRetryOnFailure(6, TimeSpan.FromSeconds(10), null);
+    }));
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
