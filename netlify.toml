@@ -1,0 +1,7 @@
+[build]
+  base = "ANJK_UI/anjk"
+  command = "npm ci && npm run build"
+  publish = "build"
+
+[build.environment]
+  REACT_APP_API_BASE = ""
