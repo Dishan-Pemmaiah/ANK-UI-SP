@@ -1,17 +1,21 @@
 using anjk_api.Live;
+using anjk_api.Data;
 using anjk_api.Entities;
 using anjk_api.Repositories;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace anjk_api.Services
 {
     public class LiveService : ILiveService
     {
+        private readonly AppDbContext _dbContext;
         private readonly IHubContext<LiveHub> _hubContext;
         private readonly IUnitOfWork _unitOfWork;
 
-        public LiveService(IHubContext<LiveHub> hubContext, IUnitOfWork unitOfWork)
+        public LiveService(AppDbContext dbContext, IHubContext<LiveHub> hubContext, IUnitOfWork unitOfWork)
         {
+            _dbContext = dbContext;
             _hubContext = hubContext;
             _unitOfWork = unitOfWork;
         }
@@ -39,10 +43,11 @@ namespace anjk_api.Services
 
         public async Task<IEnumerable<LiveUpdate>> GetHistoryAsync(int take = 20)
         {
-            var updates = await _unitOfWork.Repository<LiveUpdate>().GetAllAsync();
-            return updates
+            return await _dbContext.LiveUpdates
+                .AsNoTracking()
                 .OrderByDescending(item => item.CreatedOn)
-                .Take(take);
+                .Take(take)
+                .ToListAsync();
         }
     }
 }
