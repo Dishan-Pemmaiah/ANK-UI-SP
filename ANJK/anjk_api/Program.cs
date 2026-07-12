@@ -28,13 +28,31 @@ var allowedOrigins = configuredOrigins
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
 
+static bool IsAllowedFrontendOrigin(string origin, IReadOnlyCollection<string> exactOrigins)
+{
+    if (exactOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+    {
+        return true;
+    }
+
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+    {
+        return false;
+    }
+
+    return uri.Scheme is "http" or "https"
+        && (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+            || uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || uri.Host.EndsWith(".netlify.app", StringComparison.OrdinalIgnoreCase));
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
         if (allowedOrigins.Length > 0)
         {
-            policy.WithOrigins(allowedOrigins)
+            policy.SetIsOriginAllowed(origin => IsAllowedFrontendOrigin(origin, allowedOrigins))
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         }
