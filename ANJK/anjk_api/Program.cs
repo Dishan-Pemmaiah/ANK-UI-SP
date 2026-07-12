@@ -98,11 +98,31 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+var allowStartWithoutDb = string.Equals(
+    builder.Configuration["ALLOW_START_WITHOUT_DB"],
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
-    SeedData.Seed(dbContext);
+
+    try
+    {
+        dbContext.Database.Migrate();
+        SeedData.Seed(dbContext);
+    }
+    catch (Exception ex)
+    {
+        if (allowStartWithoutDb)
+        {
+            app.Logger.LogError(ex, "Database migration/seed failed at startup. Continuing because ALLOW_START_WITHOUT_DB=true.");
+        }
+        else
+        {
+            throw;
+        }
+    }
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
