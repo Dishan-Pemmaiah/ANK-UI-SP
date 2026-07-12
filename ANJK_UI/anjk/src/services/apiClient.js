@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_BASE || 'http://localhost:5126/api';
+const BASE_URL = process.env.REACT_APP_API_BASE || 'http://localhost:41809/api';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -12,7 +12,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('ank_token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Basic ${token}`;
   }
   return config;
 });

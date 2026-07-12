@@ -2,19 +2,18 @@ using anjk_api.Entities;
 using anjk_api.Models.Dtos;
 using anjk_api.Repositories;
 using Microsoft.AspNetCore.Identity;
+using System.Text;
 
 namespace anjk_api.Services
 {
     public class AuthService : IAuthService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IJwtTokenService _jwtTokenService;
         private readonly IPasswordHasher<AppUser> _passwordHasher;
 
-        public AuthService(IUnitOfWork unitOfWork, IJwtTokenService jwtTokenService)
+        public AuthService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _jwtTokenService = jwtTokenService;
             _passwordHasher = new PasswordHasher<AppUser>();
         }
 
@@ -35,7 +34,7 @@ namespace anjk_api.Services
 
             return new AuthResponseDto
             {
-                Token = _jwtTokenService.CreateToken(user),
+                Token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{request.Email}:{request.Password}")),
                 Role = user.Role,
                 FullName = user.FullName
             };
@@ -64,7 +63,7 @@ namespace anjk_api.Services
 
             return new AuthResponseDto
             {
-                Token = _jwtTokenService.CreateToken(user),
+                Token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{request.Email}:{request.Password}")),
                 Role = user.Role,
                 FullName = user.FullName
             };

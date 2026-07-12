@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (token) {
-      apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
+      apiClient.defaults.headers.common.Authorization = `Basic ${token}`;
     } else {
       delete apiClient.defaults.headers.common.Authorization;
     }

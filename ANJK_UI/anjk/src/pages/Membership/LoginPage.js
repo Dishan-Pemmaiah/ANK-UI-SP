@@ -17,7 +17,8 @@ export default function LoginPage() {
       await auth.login(result.token, { fullName: result.fullName, role: result.role });
       navigate('/profile');
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      const message = err?.response?.data?.title || err?.response?.data?.message || err?.message || 'Login failed. Please check your credentials.';
+      setError(message);
     }
   };
 
