@@ -6,7 +6,7 @@ returns text
 language sql
 stable
 as $$
-  select coalesce(auth.jwt() ->> 'email', '');
+  select lower(trim(coalesce(auth.jwt() ->> 'email', '')));
 $$;
 
 create or replace function public.is_admin()
@@ -19,8 +19,8 @@ as $$
   select exists (
     select 1
     from public."AppUsers" u
-    where u."Email" = public.current_user_email()
-      and u."Role" = 'Admin'
+    where lower(trim(coalesce(u."Email", ''))) = public.current_user_email()
+      and lower(trim(coalesce(u."Role", ''))) = 'admin'
   );
 $$;
 
@@ -91,18 +91,18 @@ drop policy if exists "admin write Villages" on public."Villages";
 create policy "own read AppUsers"
   on public."AppUsers"
   for select
-  using ("Email" = public.current_user_email());
+  using (lower(trim(coalesce("Email", ''))) = public.current_user_email());
 
 create policy "own insert AppUsers"
   on public."AppUsers"
   for insert
-  with check ("Email" = public.current_user_email());
+  with check (lower(trim(coalesce("Email", ''))) = public.current_user_email());
 
 create policy "own update AppUsers"
   on public."AppUsers"
   for update
-  using ("Email" = public.current_user_email())
-  with check ("Email" = public.current_user_email());
+  using (lower(trim(coalesce("Email", ''))) = public.current_user_email())
+  with check (lower(trim(coalesce("Email", ''))) = public.current_user_email());
 
 create policy "admin all AppUsers"
   on public."AppUsers"
@@ -176,7 +176,7 @@ create policy "own and admin read EventRegistrations"
       select 1
       from public."AppUsers" u
       where u."Id" = "AppUserId"
-        and u."Email" = public.current_user_email()
+        and lower(trim(coalesce(u."Email", ''))) = public.current_user_email()
     )
   );
 
@@ -188,7 +188,7 @@ create policy "own insert EventRegistrations"
       select 1
       from public."AppUsers" u
       where u."Id" = "AppUserId"
-        and u."Email" = public.current_user_email()
+        and lower(trim(coalesce(u."Email", ''))) = public.current_user_email()
     )
   );
 
