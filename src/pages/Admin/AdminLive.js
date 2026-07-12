@@ -31,17 +31,21 @@ export default function AdminLive() {
   const [history, setHistory] = useState([]);
   const [message, setMessage] = useState('');
   const [streamLink, setStreamLink] = useState('');
+  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    Promise.all([liveApi.getCurrent(), liveApi.getHistory()])
+  const loadLive = () => {
+    return Promise.all([liveApi.getCurrent(), liveApi.getHistory()])
       .then(([currentData, historyData]) => {
         setCurrent(currentData);
         setHistory(historyData);
       })
-      .catch((error) => console.error('Failed to load live status', error))
-      .finally(() => setLoading(false));
+      .catch((error) => console.error('Failed to load live status', error));
+  };
+
+  useEffect(() => {
+    loadLive().finally(() => setLoading(false));
   }, []);
 
   const handleBroadcast = async () => {
@@ -56,14 +60,51 @@ export default function AdminLive() {
         cleanedLink ? normalizeYouTubeUrl(cleanedLink) : ''
       ].filter(Boolean).join('\n');
 
-      await liveApi.broadcast(payload);
+      if (editingId) {
+        await liveApi.update(editingId, payload);
+      } else {
+        await liveApi.broadcast(payload);
+      }
+
       setMessage('');
       setStreamLink('');
+      setEditingId(null);
+      await loadLive();
     } catch (error) {
       console.error('Failed to send live broadcast', error);
     } finally {
       setSending(false);
     }
+  };
+
+  const handleEdit = (item) => {
+    const text = String(item.message || item.description || '').trim();
+    const link = text.match(/https?:\/\/[^\s]+/i)?.[0] || '';
+    const plainMessage = link ? text.replace(link, '').trim() : text;
+
+    setEditingId(item.id);
+    setMessage(plainMessage);
+    setStreamLink(link);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await liveApi.delete(id);
+      if (editingId === id) {
+        setEditingId(null);
+        setMessage('');
+        setStreamLink('');
+      }
+      await loadLive();
+    } catch (error) {
+      console.error('Failed to delete live update', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setMessage('');
+    setStreamLink('');
   };
 
   return (
@@ -103,14 +144,20 @@ export default function AdminLive() {
           <Box sx={{ mt: 3 }}>
             <Typography variant="h6" gutterBottom>Live History</Typography>
             {history.length ? history.map((item) => (
-              <Typography key={item.id} sx={{ opacity: 0.85, mb: 1 }}>
-                {new Date(item.createdOn).toLocaleString()} - {item.message}
-              </Typography>
+              <Box key={item.id} sx={{ mb: 1.5, p: 1.25, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 1.5 }}>
+                <Typography sx={{ opacity: 0.9 }}>
+                  {new Date(item.createdOn).toLocaleString()} - {item.message}
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleEdit(item)}>Edit</Button>
+                  <Button size="small" color="error" variant="outlined" onClick={() => handleDelete(item.id)}>Delete</Button>
+                </Box>
+              </Box>
             )) : <Typography>No history available.</Typography>}
           </Box>
           <Box sx={{ mt: 3 }}>
             <TextField
-              label="Broadcast message"
+              label={editingId ? 'Edit message' : 'Broadcast message'}
               fullWidth
               multiline
               minRows={2}
@@ -127,8 +174,13 @@ export default function AdminLive() {
               helperText="Optional. Paste a YouTube watch link, short link, embed link, or video ID."
             />
             <Button sx={{ mt: 2 }} variant="contained" onClick={handleBroadcast} disabled={sending || (!message.trim() && !streamLink.trim())}>
-              {sending ? 'Sending...' : 'Send Broadcast'}
+              {sending ? 'Saving...' : (editingId ? 'Update Broadcast' : 'Send Broadcast')}
             </Button>
+            {editingId ? (
+              <Button sx={{ mt: 2, ml: 1 }} variant="outlined" onClick={handleCancelEdit}>
+                Cancel Edit
+              </Button>
+            ) : null}
           </Box>
         </Paper>
       )}

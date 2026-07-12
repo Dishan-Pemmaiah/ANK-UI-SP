@@ -76,9 +76,18 @@ export default function LivePage() {
   const currentText = String(currentUpdate?.message || currentUpdate?.description || currentUpdate?.title || '').trim();
   const currentBroadcast = parseBroadcastText(currentText);
   const currentHasStream = Boolean(currentBroadcast.streamUrl);
+  const seen = new Set();
   const liveItems = [currentUpdate, ...history]
     .filter(Boolean)
     .map((item, index) => parseHistoryItem(item, index))
+    .filter((item) => {
+      const key = item.id || `${item.message}|${item.createdOn}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    })
     .slice(0, 6);
 
   return (

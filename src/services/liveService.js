@@ -1,4 +1,4 @@
-import { createRow, listRows } from './supabaseDb';
+import { createRow, deleteRow, listRows, updateRow } from './supabaseDb';
 
 const TABLE = 'LiveUpdates';
 
@@ -17,7 +17,9 @@ const liveApi = {
       message,
       createdOn: new Date().toISOString()
     });
-  }
+  },
+  update: (id, message) => updateRow(TABLE, id, { message }),
+  delete: (id) => deleteRow(TABLE, id)
 };
 
 export default liveApi;
