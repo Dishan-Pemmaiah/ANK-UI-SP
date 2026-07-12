@@ -25,6 +25,46 @@ namespace anjk_api.Controllers
             return Ok(members);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var member = await _memberService.GetByIdAsync(id);
+            return member == null ? NotFound() : Ok(member);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] AdminMemberCreateDto dto)
+        {
+            var created = await _memberService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] AdminMemberUpdateDto dto)
+        {
+            var updated = await _memberService.UpdateAsync(id, dto);
+            return Ok(updated);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/approve-admin")]
+        public async Task<IActionResult> ApproveAdmin(int id)
+        {
+            var updated = await _memberService.ApproveAdminAsync(id);
+            return Ok(updated);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _memberService.DeleteAsync(id);
+            return NoContent();
+        }
+
         [HttpGet("profile")]
         public async Task<IActionResult> Profile()
         {

@@ -1,6 +1,14 @@
 import apiClient from './apiClient';
 
 const liveApi = {
+  getCurrent: async () => {
+    const response = await apiClient.get('/Live');
+    return response.data;
+  },
+  getHistory: async () => {
+    const response = await apiClient.get('/Live/history');
+    return response.data;
+  },
   getStatus: async () => {
     const response = await apiClient.get('/Live');
     return response.data;

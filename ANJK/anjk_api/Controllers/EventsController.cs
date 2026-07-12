@@ -50,6 +50,14 @@ namespace anjk_api.Controllers
             return Ok(updated);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _eventService.DeleteAsync(id);
+            return NoContent();
+        }
+
         [Authorize]
         [HttpPost("{id}/register")]
         public async Task<IActionResult> Register(int id, [FromBody] decimal amountPaid)

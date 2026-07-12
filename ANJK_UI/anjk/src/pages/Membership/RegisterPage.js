@@ -1,11 +1,11 @@
 import { useState, useContext } from 'react';
-import { Box, Typography, TextField, Button, Paper } from '@mui/material';
+import { Box, Typography, TextField, Button, Paper, FormControlLabel, Checkbox } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import authApi from '../../services/authService';
 import AuthContext from '../../context/AuthContext';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ fullName: '', email: '', password: '' });
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', requestAdminApproval: false });
   const [error, setError] = useState('');
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
@@ -13,7 +13,11 @@ export default function RegisterPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const result = await authApi.register({ ...form, role: 'Member' });
+      const result = await authApi.register({
+        ...form,
+        role: 'General Public',
+        requestAdminApproval: form.requestAdminApproval
+      });
       await auth.login(result.token, { fullName: result.fullName, role: result.role });
       navigate('/profile');
     } catch (err) {
@@ -67,6 +71,19 @@ export default function RegisterPage() {
               InputLabelProps={{ sx: { color: '#c4cdd8' } }}
               InputProps={{ sx: { backgroundColor: '#0d1218', color: '#ffffff' } }}
             />
+            <FormControlLabel
+              sx={{ mt: 1, color: '#ffffff' }}
+              control={
+                <Checkbox
+                  checked={form.requestAdminApproval}
+                  onChange={(e) => setForm({ ...form, requestAdminApproval: e.target.checked })}
+                />
+              }
+              label="Request admin approval"
+            />
+            <Typography sx={{ color: '#c4cdd8', fontSize: '0.9rem', mt: 1 }}>
+              If you request admin access, your account will be created as General Public until an admin approves it.
+            </Typography>
             {error && <Typography color="error" sx={{ mt: 1 }}>{error}</Typography>}
             <Button type="submit" variant="contained" sx={{ mt: 3, width: '100%' }}>
               Register

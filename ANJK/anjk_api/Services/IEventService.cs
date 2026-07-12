@@ -8,6 +8,7 @@ namespace anjk_api.Services
         Task<EventDto?> GetByIdAsync(int id);
         Task<EventDto> CreateAsync(EventCreateDto dto);
         Task<EventDto> UpdateAsync(int id, EventCreateDto dto);
+        Task DeleteAsync(int id);
         Task RegisterAsync(int eventId, int userId, decimal amountPaid);
     }
 }

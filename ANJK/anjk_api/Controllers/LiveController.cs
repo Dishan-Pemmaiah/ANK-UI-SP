@@ -1,48 +1,60 @@
 using anjk_api.Live;
 using anjk_api.Models.Dtos;
-using anjk_api.Repositories;
 using anjk_api.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace anjk_api.Controllers
 {
     [ApiController]
-    [Authorize]
     [Route("api/[controller]")]
     public class LiveController : ControllerBase
     {
         private readonly ILiveService _liveService;
-        private readonly IUnitOfWork _unitOfWork;
 
-        public LiveController(ILiveService liveService, IUnitOfWork unitOfWork)
+        public LiveController(ILiveService liveService)
         {
             _liveService = liveService;
-            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetStatus()
+        public async Task<IActionResult> GetCurrent()
         {
-            // Simple static status placeholder; extend this with real live match data later.
-            return Ok(new
+            var current = await _liveService.GetCurrentAsync();
+            if (current == null)
             {
-                title = "Live match tracker",
-                description = "Track the current match and broadcast updates from the admin portal.",
-                teamA = "Anjigeri Stars",
-                teamB = "Guest Team",
-                scoreA = 0,
-                scoreB = 0,
-                liveStatus = "Awaiting live updates"
+                return Ok(null);
+            }
+
+            return Ok(new LiveUpdateDto
+            {
+                Id = current.Id,
+                Message = current.Message,
+                CreatedOn = current.CreatedOn
             });
         }
 
-        [Authorize(Roles = "Admin")]
+        [HttpGet("history")]
+        public async Task<IActionResult> GetHistory()
+        {
+            var history = await _liveService.GetHistoryAsync();
+            return Ok(history.Select(item => new LiveUpdateDto
+            {
+                Id = item.Id,
+                Message = item.Message,
+                CreatedOn = item.CreatedOn
+            }));
+        }
+
         [HttpPost("broadcast")]
         public async Task<IActionResult> Broadcast([FromBody] LiveBroadcastDto dto)
         {
-            await _liveService.SendLiveMessageAsync(dto.Message);
-            return Ok();
+            var saved = await _liveService.SendLiveMessageAsync(dto.Message);
+            return Ok(new LiveUpdateDto
+            {
+                Id = saved.Id,
+                Message = saved.Message,
+                CreatedOn = saved.CreatedOn
+            });
         }
     }
 }

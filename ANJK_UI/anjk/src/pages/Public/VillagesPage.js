@@ -3,26 +3,14 @@ import { Box, Typography, Grid, Card, CardContent, Button } from '@mui/material'
 import { Link } from 'react-router-dom';
 import villageApi from '../../services/villageService';
 
-const fallbackVillages = [
-  { name: 'Hudikeri', path: '/villages/hudikeri' },
-  { name: 'Konageri', path: '/villages/konageri' },
-  { name: 'Hysudloor', path: '/villages/hysudloor' },
-  { name: 'Begur', path: '/villages/begur' },
-  { name: 'Mugutageri', path: '/villages/mugutageri' },
-  { name: 'Nadikeri', path: '/villages/nadikeri' },
-  { name: 'Thuchamakeri', path: '/villages/thuchamakeri' },
-  { name: 'Chikkamundur', path: '/villages/chikkamundur' },
-  { name: 'Baliamandur', path: '/villages/baliamandur' }
-];
-
 export default function VillagesPage() {
-  const [villages, setVillages] = useState(fallbackVillages);
+  const [villages, setVillages] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     villageApi.getAll()
       .then((data) => setVillages(data))
-      .catch(() => setVillages(fallbackVillages))
+      .catch(() => setVillages([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -49,7 +37,8 @@ export default function VillagesPage() {
           </Grid>
         ))}
       </Grid>
-      {loading && <Typography sx={{ mt: 2 }}>Loading villages...</Typography>}
+      {loading && <Typography sx={{ mt: 2 }}>Loading villages from the database...</Typography>}
+      {!loading && villages.length === 0 && <Typography sx={{ mt: 2 }}>No village records found in the database.</Typography>}
     </Box>
   );
 }

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { CssBaseline } from '@mui/material';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import MainLayout from './components/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/Public/HomePage';
@@ -33,7 +33,13 @@ import LivePage from './pages/Live/LivePage';
 import AdminLayout from './pages/Admin/AdminLayout';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import AdminMembers from './pages/Admin/AdminMembers';
+import AdminAbout from './pages/Admin/AdminAbout';
+import AdminCommittee from './pages/Admin/AdminCommittee';
+import AdminHeritage from './pages/Admin/AdminHeritage';
 import AdminEvents from './pages/Admin/AdminEvents';
+import AdminSports from './pages/Admin/AdminSports';
+import AdminNews from './pages/Admin/AdminNews';
+import AdminGallery from './pages/Admin/AdminGallery';
 import AdminLive from './pages/Admin/AdminLive';
 import AdminAchievements from './pages/Admin/AdminAchievements';
 import NotFoundPage from './pages/NotFoundPage';
@@ -41,13 +47,48 @@ import { AuthProvider } from './context/AuthContext';
 import './App.css';
 import './AppTheme.css';
 
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#b30000'
+    },
+    background: {
+      default: '#0a0a0a',
+      paper: '#141414'
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: '#d1d1d1'
+    }
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#0a0a0a',
+          color: '#ffffff'
+        }
+      }
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none'
+        }
+      }
+    }
+  }
+});
+
 function App() {
   return (
-    <AuthProvider>
-      <CssBaseline />
-      <Router>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
+    <ThemeProvider theme={darkTheme}>
+      <AuthProvider>
+        <CssBaseline />
+        <Router>
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="committee" element={<CommitteePage />} />
@@ -79,15 +120,22 @@ function App() {
             <Route path="admin" element={<ProtectedRoute requiredRole="Admin"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="members" element={<AdminMembers />} />
+              <Route path="about" element={<AdminAbout />} />
+              <Route path="committee" element={<AdminCommittee />} />
+              <Route path="heritage" element={<AdminHeritage />} />
               <Route path="events" element={<AdminEvents />} />
+              <Route path="sports" element={<AdminSports />} />
+              <Route path="news" element={<AdminNews />} />
+              <Route path="gallery" element={<AdminGallery />} />
               <Route path="live" element={<AdminLive />} />
               <Route path="achievements" element={<AdminAchievements />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </Router>
-    </AuthProvider>
+            </Route>
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

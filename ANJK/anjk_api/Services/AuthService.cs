@@ -52,9 +52,9 @@ namespace anjk_api.Services
             {
                 FullName = request.FullName,
                 Email = request.Email,
-                Role = request.Role,
+                Role = request.RequestAdminApproval || request.Role == "Admin" ? "General Public" : "General Public",
                 MembershipExpires = DateTime.UtcNow.AddYears(1),
-                MembershipStatus = "Active"
+                MembershipStatus = request.RequestAdminApproval || request.Role == "Admin" ? "Pending Admin Approval" : "Active"
             };
             user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 

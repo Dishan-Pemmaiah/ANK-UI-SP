@@ -6,7 +6,7 @@ import eventApi from '../../services/eventService';
 export default function EventDetailPage() {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
-  const [payment, setPayment] = useState(0);
+  const payment = 0;
   const [message, setMessage] = useState('');
 
   useEffect(() => {

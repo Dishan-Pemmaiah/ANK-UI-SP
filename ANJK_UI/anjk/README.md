@@ -68,3 +68,17 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Direct gallery and live links
+
+This app supports a no-database content mode for gallery images and YouTube live streams.
+
+Set these environment variables in `.env` or your deployment platform:
+
+- `REACT_APP_GALLERY_IMAGE_URLS` - comma or newline separated public image URLs or Google Drive share links
+- `REACT_APP_GALLERY_IMAGE_TITLES` - optional comma or newline separated titles for each gallery image
+- `REACT_APP_YOUTUBE_STREAM_URL` - a YouTube watch link, short link, embed link, or video ID for the current live stream
+- `REACT_APP_YOUTUBE_VIDEO_ID` - optional fallback video ID if you prefer not to use a full URL
+- `REACT_APP_YOUTUBE_LIVE_HISTORY` - optional comma or newline separated list of previous YouTube links
+
+Google Drive image share links are converted automatically into direct display URLs when possible.

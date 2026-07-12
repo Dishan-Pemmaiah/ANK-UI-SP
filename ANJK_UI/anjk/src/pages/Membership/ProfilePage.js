@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Box, Typography, Paper, TextField, Button } from '@mui/material';
-import authApi from '../../services/authService';
 import AuthContext from '../../context/AuthContext';
+import authApi from '../../services/authService';
 
 export default function ProfilePage() {
   const auth = useContext(AuthContext);
@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const handleUpdate = async () => {
     const updated = await authApi.updateProfile({ fullName: name });
     setProfile(updated);
+    auth?.updateUser?.({ ...auth.user, fullName: updated.fullName, role: updated.role });
     setMessage('Profile updated successfully.');
   };
 

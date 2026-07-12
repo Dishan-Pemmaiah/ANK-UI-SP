@@ -4,7 +4,13 @@ import { Box, List, ListItemButton, ListItemText, Typography } from '@mui/materi
 const items = [
   { label: 'Dashboard', path: '/admin' },
   { label: 'Members', path: '/admin/members' },
+  { label: 'About', path: '/admin/about' },
+  { label: 'Committee', path: '/admin/committee' },
+  { label: 'Heritage', path: '/admin/heritage' },
   { label: 'Events', path: '/admin/events' },
+  { label: 'Sports', path: '/admin/sports' },
+  { label: 'News', path: '/admin/news' },
+  { label: 'Gallery', path: '/admin/gallery' },
   { label: 'Live Updates', path: '/admin/live' },
   { label: 'Achievements', path: '/admin/achievements' }
 ];

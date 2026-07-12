@@ -28,6 +28,18 @@ namespace anjk_api.Controllers
             }));
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var item = await _unitOfWork.Repository<Entities.GalleryItem>().GetByIdAsync(id);
+            return item == null ? NotFound() : Ok(new GalleryItemDto
+            {
+                Id = item.Id,
+                Title = item.Title,
+                ImageUrl = item.ImageUrl
+            });
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] GalleryCreateDto dto)
@@ -41,6 +53,44 @@ namespace anjk_api.Controllers
             await _unitOfWork.Repository<Entities.GalleryItem>().AddAsync(entity);
             await _unitOfWork.CompleteAsync();
             return CreatedAtAction(nameof(GetAll), new { id = entity.Id }, entity);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] GalleryCreateDto dto)
+        {
+            var item = await _unitOfWork.Repository<Entities.GalleryItem>().GetByIdAsync(id);
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            item.Title = dto.Title;
+            item.ImageUrl = dto.ImageUrl;
+            _unitOfWork.Repository<Entities.GalleryItem>().Update(item);
+            await _unitOfWork.CompleteAsync();
+
+            return Ok(new GalleryItemDto
+            {
+                Id = item.Id,
+                Title = item.Title,
+                ImageUrl = item.ImageUrl
+            });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var item = await _unitOfWork.Repository<Entities.GalleryItem>().GetByIdAsync(id);
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            _unitOfWork.Repository<Entities.GalleryItem>().Delete(item);
+            await _unitOfWork.CompleteAsync();
+            return NoContent();
         }
     }
 }

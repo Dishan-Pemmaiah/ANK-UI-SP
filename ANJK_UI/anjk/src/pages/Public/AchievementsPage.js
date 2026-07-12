@@ -2,20 +2,14 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, Grid, Card, CardContent } from '@mui/material';
 import achievementApi from '../../services/achievementService';
 
-const fallbackAchievements = [
-  { id: 1, title: 'KHPL Champions', description: 'Anjigeri Naad won the Kodava Hockey Premier League championship, showcasing the strength of the nine-village team.' },
-  { id: 2, title: 'Community Fitness Programs', description: 'Organized fitness and youth development programs across the Anjigeri Naad villages.' },
-  { id: 3, title: 'Social Cohesion Initiatives', description: 'Led cleanliness and local environmental drives to unite the Kodava community.' }
-];
-
 export default function AchievementsPage() {
-  const [achievements, setAchievements] = useState(fallbackAchievements);
+  const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     achievementApi.getAll()
       .then((data) => setAchievements(data))
-      .catch(() => setAchievements(fallbackAchievements))
+      .catch(() => setAchievements([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -37,7 +31,8 @@ export default function AchievementsPage() {
           </Grid>
         ))}
       </Grid>
-      {loading && <Typography sx={{ mt: 2 }}>Loading achievements...</Typography>}
+      {loading && <Typography sx={{ mt: 2 }}>Loading achievements from the database...</Typography>}
+      {!loading && achievements.length === 0 && <Typography sx={{ mt: 2 }}>No achievements found in the database.</Typography>}
     </Box>
   );
 }

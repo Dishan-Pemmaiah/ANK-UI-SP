@@ -22,21 +22,23 @@ const heritableItems = [
   { label: 'Okka', path: '/okka' }
 ];
 
-export default function PublicSidebar() {
+const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
+
+export default function PublicSidebar({ mobile = false, onNavigate }) {
   const [heritableOpen, setHeritableOpen] = useState(false);
 
   return (
     <Box
       sx={{
-        width: 240,
+        width: mobile ? '100%' : 240,
         bgcolor: '#111111',
-        minHeight: 'calc(100vh - 64px)',
+        minHeight: mobile ? '100%' : 'calc(100vh - 64px)',
         p: 2,
-        display: { xs: 'none', md: 'block' }
+        display: 'block'
       }}
     >
       <Typography variant="h6" gutterBottom sx={{ color: '#ffffff' }}>
-        Explore ANK
+        Discover ANK
       </Typography>
       <List>
         {items.map((item) => (
@@ -44,6 +46,7 @@ export default function PublicSidebar() {
             key={item.path}
             component={NavLink}
             to={item.path}
+            onClick={onNavigate}
             sx={{
               color: '#ffffff',
               mb: 1,
@@ -77,6 +80,7 @@ export default function PublicSidebar() {
                   key={item.path}
                   component={NavLink}
                   to={item.path}
+                  onClick={onNavigate}
                   sx={{
                     color: '#ffffff',
                     mb: 1,
@@ -93,6 +97,35 @@ export default function PublicSidebar() {
             </List>
           )}
         </Box>
+        <ListItemButton
+          component={NavLink}
+          to="/contact"
+          onClick={onNavigate}
+          sx={{
+            color: '#ffffff',
+            mb: 1,
+            borderRadius: 1,
+            '&.active': {
+              bgcolor: '#660000'
+            }
+          }}
+        >
+          <ListItemText primary="Contact" />
+        </ListItemButton>
+        <ListItemButton
+          component="a"
+          href={instagramUrl}
+          target="_blank"
+          rel="noreferrer"
+          sx={{
+            color: '#ffffff',
+            borderRadius: 1,
+            border: '1px solid rgba(255,255,255,0.12)',
+            backgroundColor: 'rgba(255,255,255,0.04)'
+          }}
+        >
+          <ListItemText primary="Instagram" secondary="See photos, updates, and club moments" secondaryTypographyProps={{ sx: { color: 'rgba(255,255,255,0.6)' } }} />
+        </ListItemButton>
       </List>
     </Box>
   );

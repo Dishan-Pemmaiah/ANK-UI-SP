@@ -21,20 +21,17 @@ export default function Live() {
         <div className="loader">Loading live feed...</div>
       ) : (
         <section className="live-card">
-          <h2>{status.title}</h2>
-          <p>{status.description}</p>
-          <div className="scoreboard">
-            <div>
-              <strong>{status.teamA}</strong>
-              <span>{status.scoreA}</span>
-            </div>
-            <div>
-              <strong>{status.teamB}</strong>
-              <span>{status.scoreB}</span>
-            </div>
-            <div className="live-status">{status.liveStatus}</div>
-          </div>
-          <div className="live-note">Watch the match live and stay connected with the club.</div>
+          {status ? (
+            <>
+              <h2>{status.message}</h2>
+              <p>Updated at {new Date(status.createdOn).toLocaleString()}</p>
+            </>
+          ) : (
+            <>
+              <h2>No live update available</h2>
+              <p>Check back when an admin posts the next live update.</p>
+            </>
+          )}
         </section>
       )}
     </main>

@@ -1,37 +1,35 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, List, ListItem, ListItemText } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, Paper } from '@mui/material';
 import villageApi from '../services/villageService';
-
-const fallbackVillages = [
-  'Hudikeri',
-  'Konageri',
-  'Hysudloor (Hysudluru)',
-  'Begur (Begoor)',
-  'Mugutageri (Mugatageri)',
-  'Nadikeri',
-  'Thuchamakeri (Thuchumkeri)',
-  'Chikkamundur (Chikkamandur)',
-  'Baliamandur (Ballyamandur)'
-];
+import aboutApi from '../../services/aboutService';
 
 export default function AboutDetailsPage() {
-  const [villages, setVillages] = useState(fallbackVillages);
+  const [villages, setVillages] = useState([]);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    villageApi.getAll()
-      .then((data) => setVillages(data.map((item) => item.name || item)))
-      .catch(() => setVillages(fallbackVillages))
+    Promise.all([villageApi.getAll(), aboutApi.getAll()])
+      .then(([villageData, aboutData]) => {
+        setVillages(villageData.map((item) => item.name || item));
+        setSections(aboutData);
+      })
+      .catch(() => {
+        setVillages([]);
+        setSections([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <Box>
       <Typography variant="h4" gutterBottom>About ANK</Typography>
-      <Typography paragraph>
-        Anjigeri Naad Koota celebrates the Kodava heritage of the Anjigeri region, where a "Naad" historically described a community territory
-        inhabited by interlinked Kodava okkas (families).
-      </Typography>
+      {sections.map((section) => (
+        <Paper key={section.id} sx={{ p: 3, mb: 2, background: '#141414' }}>
+          <Typography variant="h6" gutterBottom>{section.title}</Typography>
+          <Typography paragraph sx={{ mb: 0 }}>{section.body}</Typography>
+        </Paper>
+      ))}
       <Typography variant="h6" gutterBottom>The Nine Villages</Typography>
       <List>
         {villages.map((village) => (
@@ -40,18 +38,8 @@ export default function AboutDetailsPage() {
           </ListItem>
         ))}
       </List>
-      <Typography paragraph>
-        In contemporary use, the Anjigeri Naad name is strongly connected to sports — especially the Kodava Hockey Premier League (KHPL).
-        The club brings together athletes and sports enthusiasts from these nine villages to compete, train, and promote fitness.
-      </Typography>
-      <Typography paragraph>
-        Beyond hockey, Anjigeri Naad supports community engagement through fitness awareness programs, environmental campaigns,
-        youth development, and local events that strengthen social cohesion across the Kodava community.
-      </Typography>
-      <Typography paragraph>
-        Our club identity helps residents maintain physical fitness, celebrate Kodava culture, and nurture a collective spirit rooted in regional pride.
-      </Typography>
-      {loading && <Typography sx={{ mt: 2 }}>Loading village details...</Typography>}
+      {loading && <Typography sx={{ mt: 2 }}>Loading village details from the database...</Typography>}
+      {!loading && villages.length === 0 && <Typography sx={{ mt: 2 }}>No village records found in the database.</Typography>}
     </Box>
   );
 }

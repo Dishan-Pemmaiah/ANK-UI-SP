@@ -28,6 +28,11 @@ export function AuthProvider({ children }) {
     setLoading(false);
   };
 
+  const updateUser = (userData) => {
+    setUser(userData);
+    localStorage.setItem('ank_user', JSON.stringify(userData));
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -36,7 +41,7 @@ export function AuthProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ user, token, loading, login, logout, isAuthenticated: Boolean(token) }),
+    () => ({ user, token, loading, login, logout, updateUser, isAuthenticated: Boolean(token) }),
     [user, token, loading]
   );
 

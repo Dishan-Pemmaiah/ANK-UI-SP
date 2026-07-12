@@ -84,6 +84,18 @@ namespace anjk_api.Services
             return Map(entity);
         }
 
+        public async Task DeleteAsync(int id)
+        {
+            var entity = await _unitOfWork.Repository<Event>().GetByIdAsync(id);
+            if (entity == null)
+            {
+                throw new InvalidOperationException("Event not found.");
+            }
+
+            _unitOfWork.Repository<Event>().Delete(entity);
+            await _unitOfWork.CompleteAsync();
+        }
+
         private static EventDto Map(Event entity)
         {
             return new EventDto

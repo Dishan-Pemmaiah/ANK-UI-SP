@@ -24,6 +24,9 @@ namespace anjk_api.Data
         public DbSet<HeritageItem> HeritageItems => Set<HeritageItem>();
         public DbSet<HallOfFameItem> HallOfFameItems => Set<HallOfFameItem>();
         public DbSet<Village> Villages => Set<Village>();
+        public DbSet<AboutSection> AboutSections => Set<AboutSection>();
+        public DbSet<SportTournamentRecord> SportTournamentRecords => Set<SportTournamentRecord>();
+        public DbSet<LiveUpdate> LiveUpdates => Set<LiveUpdate>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -21,7 +21,7 @@ namespace anjk_api.Entities
 
         [Required]
         [MaxLength(32)]
-        public string Role { get; set; } = "Member";
+        public string Role { get; set; } = "General Public";
 
         [Required]
         [MaxLength(32)]

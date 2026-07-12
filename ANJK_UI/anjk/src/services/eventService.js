@@ -17,6 +17,10 @@ const eventApi = {
     const response = await apiClient.put(`/Events/${id}`, payload);
     return response.data;
   },
+  delete: async (id) => {
+    const response = await apiClient.delete(`/Events/${id}`);
+    return response.data;
+  },
   register: async (id, amountPaid) => {
     const response = await apiClient.post(`/Events/${id}/register`, amountPaid);
     return response.data;
