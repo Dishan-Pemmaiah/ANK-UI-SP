@@ -4,6 +4,8 @@ using anjk_api.Entities;
 using anjk_api.Repositories;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace anjk_api.Services
 {
@@ -18,12 +20,14 @@ namespace anjk_api.Services
 
         private readonly AppDbContext _dbContext;
         private readonly IHubContext<LiveHub> _hubContext;
+        private readonly ILogger<LiveService> _logger;
         private readonly IUnitOfWork _unitOfWork;
 
-        public LiveService(AppDbContext dbContext, IHubContext<LiveHub> hubContext, IUnitOfWork unitOfWork)
+        public LiveService(AppDbContext dbContext, IHubContext<LiveHub> hubContext, ILogger<LiveService> logger, IUnitOfWork unitOfWork)
         {
             _dbContext = dbContext;
             _hubContext = hubContext;
+            _logger = logger;
             _unitOfWork = unitOfWork;
         }
 
@@ -46,24 +50,55 @@ namespace anjk_api.Services
 
         public async Task<LiveUpdate?> GetCurrentAsync()
         {
-            var history = await GetHistoryAsync(1);
-            return history.FirstOrDefault();
+            try
+            {
+                var history = await GetHistoryAsync(1);
+                return history.FirstOrDefault();
+            }
+            catch (Exception ex) when (IsTransientOrMissingLiveTable(ex))
+            {
+                _logger.LogWarning(ex, "Returning no current live update because the live updates store is temporarily unavailable.");
+                return null;
+            }
         }
 
         public async Task<IEnumerable<LiveUpdate>> GetHistoryAsync(int take = 20)
         {
-            await EnsureLiveUpdatesTableAsync();
+            try
+            {
+                await EnsureLiveUpdatesTableAsync();
 
-            return await _dbContext.LiveUpdates
-                .AsNoTracking()
-                .OrderByDescending(item => item.CreatedOn)
-                .Take(take)
-                .ToListAsync();
+                return await _dbContext.LiveUpdates
+                    .AsNoTracking()
+                    .OrderByDescending(item => item.CreatedOn)
+                    .Take(take)
+                    .ToListAsync();
+            }
+            catch (Exception ex) when (IsTransientOrMissingLiveTable(ex))
+            {
+                _logger.LogWarning(ex, "Returning empty live history because the live updates store is temporarily unavailable.");
+                return Array.Empty<LiveUpdate>();
+            }
         }
 
         private Task EnsureLiveUpdatesTableAsync()
         {
             return _dbContext.Database.ExecuteSqlRawAsync(EnsureLiveUpdatesTableSql);
+        }
+
+        private static bool IsTransientOrMissingLiveTable(Exception ex)
+        {
+            if (ex is PostgresException postgresException && postgresException.SqlState == "42P01")
+            {
+                return true;
+            }
+
+            if (ex is NpgsqlException)
+            {
+                return true;
+            }
+
+            return ex is InvalidOperationException && ex.InnerException is NpgsqlException;
         }
     }
 }
