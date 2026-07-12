@@ -18,6 +18,9 @@ namespace anjk_api.Services
                 ""CreatedOn"" timestamp with time zone NOT NULL DEFAULT NOW()
             );";
 
+        private static readonly SemaphoreSlim EnsureLiveUpdatesTableLock = new(1, 1);
+        private static volatile bool _liveUpdatesTableReady;
+
         private readonly AppDbContext _dbContext;
         private readonly IHubContext<LiveHub> _hubContext;
         private readonly ILogger<LiveService> _logger;
@@ -83,7 +86,31 @@ namespace anjk_api.Services
 
         private Task EnsureLiveUpdatesTableAsync()
         {
-            return _dbContext.Database.ExecuteSqlRawAsync(EnsureLiveUpdatesTableSql);
+            return EnsureLiveUpdatesTableCoreAsync();
+        }
+
+        private async Task EnsureLiveUpdatesTableCoreAsync()
+        {
+            if (_liveUpdatesTableReady)
+            {
+                return;
+            }
+
+            await EnsureLiveUpdatesTableLock.WaitAsync();
+            try
+            {
+                if (_liveUpdatesTableReady)
+                {
+                    return;
+                }
+
+                await _dbContext.Database.ExecuteSqlRawAsync(EnsureLiveUpdatesTableSql);
+                _liveUpdatesTableReady = true;
+            }
+            finally
+            {
+                EnsureLiveUpdatesTableLock.Release();
+            }
         }
 
         private static bool IsTransientOrMissingLiveTable(Exception ex)

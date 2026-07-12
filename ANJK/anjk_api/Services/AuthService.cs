@@ -1,26 +1,32 @@
 using anjk_api.Entities;
+using anjk_api.Data;
 using anjk_api.Models.Dtos;
 using anjk_api.Repositories;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace anjk_api.Services
 {
     public class AuthService : IAuthService
     {
+        private readonly AppDbContext _dbContext;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher<AppUser> _passwordHasher;
 
-        public AuthService(IUnitOfWork unitOfWork)
+        public AuthService(AppDbContext dbContext, IUnitOfWork unitOfWork)
         {
+            _dbContext = dbContext;
             _unitOfWork = unitOfWork;
             _passwordHasher = new PasswordHasher<AppUser>();
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
         {
-            var users = await _unitOfWork.Repository<AppUser>().FindAsync(u => u.Email == request.Email);
-            var user = users.FirstOrDefault();
+            var normalizedEmail = request.Email.Trim();
+            var user = await _dbContext.AppUsers
+                .AsNoTracking()
+                .SingleOrDefaultAsync(u => u.Email == normalizedEmail);
             if (user == null)
             {
                 throw new InvalidOperationException("Invalid login request.");
@@ -34,7 +40,7 @@ namespace anjk_api.Services
 
             return new AuthResponseDto
             {
-                Token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{request.Email}:{request.Password}")),
+                Token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{normalizedEmail}:{request.Password}")),
                 Role = user.Role,
                 FullName = user.FullName
             };
@@ -42,8 +48,11 @@ namespace anjk_api.Services
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
         {
-            var existingUsers = await _unitOfWork.Repository<AppUser>().FindAsync(u => u.Email == request.Email);
-            if (existingUsers.Any())
+            var normalizedEmail = request.Email.Trim();
+            var emailExists = await _dbContext.AppUsers
+                .AsNoTracking()
+                .AnyAsync(u => u.Email == normalizedEmail);
+            if (emailExists)
             {
                 throw new InvalidOperationException("Email is already registered.");
             }
@@ -51,7 +60,7 @@ namespace anjk_api.Services
             var user = new AppUser
             {
                 FullName = request.FullName,
-                Email = request.Email,
+                Email = normalizedEmail,
                 Role = request.RequestAdminApproval || request.Role == "Admin" ? "General Public" : "General Public",
                 MembershipExpires = DateTime.UtcNow.AddYears(1),
                 MembershipStatus = request.RequestAdminApproval || request.Role == "Admin" ? "Pending Admin Approval" : "Active"
@@ -63,7 +72,7 @@ namespace anjk_api.Services
 
             return new AuthResponseDto
             {
-                Token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{request.Email}:{request.Password}")),
+                Token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{normalizedEmail}:{request.Password}")),
                 Role = user.Role,
                 FullName = user.FullName
             };

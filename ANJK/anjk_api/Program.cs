@@ -107,7 +107,7 @@ if (!connectionBuilder.ContainsKey("Connection Idle Lifetime")) connectionBuilde
 
 connectionBuilder.TcpKeepAlive = true;
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContextPool<AppDbContext>(options =>
     options.UseNpgsql(connectionBuilder.ConnectionString, npgsqlOptions =>
     {
         npgsqlOptions.CommandTimeout((int)connectionBuilder.CommandTimeout);
