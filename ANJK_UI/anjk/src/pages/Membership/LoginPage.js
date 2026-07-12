@@ -7,11 +7,15 @@ import AuthContext from '../../context/AuthContext';
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+
     try {
       const result = await authApi.login(form);
       await auth.login(result.token, { fullName: result.fullName, role: result.role });
@@ -19,6 +23,8 @@ export default function LoginPage() {
     } catch (err) {
       const message = err?.response?.data?.title || err?.response?.data?.message || err?.message || 'Login failed. Please check your credentials.';
       setError(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -57,8 +63,8 @@ export default function LoginPage() {
               InputProps={{ sx: { backgroundColor: '#0d1218', color: '#ffffff' } }}
             />
             {error && <Typography color="error" sx={{ mt: 1 }}>{error}</Typography>}
-            <Button type="submit" variant="contained" sx={{ mt: 3, width: '100%' }}>
-              Login
+            <Button type="submit" variant="contained" sx={{ mt: 3, width: '100%' }} disabled={isSubmitting}>
+              {isSubmitting ? 'Signing in...' : 'Login'}
             </Button>
           </Box>
         </Paper>

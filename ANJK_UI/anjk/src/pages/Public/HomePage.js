@@ -12,26 +12,67 @@ const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2
 export default function HomePage() {
   const [highlights, setHighlights] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    Promise.all([
-      newsApi.getAll().catch(() => []),
-      eventApi.getAll().catch(() => []),
-      achievementApi.getAll().catch(() => [])
-    ]).then(([news, events, achievements]) => {
+    const highlightEntries = new Map();
+
+    const syncHighlights = () => {
       if (!mounted) return;
 
-      const nextHighlights = [
-        news[0] ? { title: news[0].title, description: news[0].content, action: { label: 'Read news', path: '/news' } } : null,
-        events[0] ? { title: events[0].name, description: events[0].description, action: { label: 'View events', path: '/events' } } : null,
-        achievements[0] ? { title: achievements[0].title, description: achievements[0].description, action: { label: 'View achievements', path: '/achievements' } } : null
-      ].filter(Boolean);
+      const orderedHighlights = ['news', 'events', 'achievements']
+        .map((key) => highlightEntries.get(key))
+        .filter(Boolean);
 
-      setHighlights(nextHighlights);
-      setActiveIndex(0);
-    });
+      setHighlights(orderedHighlights);
+      setActiveIndex((previousIndex) => {
+        if (orderedHighlights.length === 0) {
+          return 0;
+        }
+
+        return Math.min(previousIndex, orderedHighlights.length - 1);
+      });
+    };
+
+    const loadSection = async (key, request, mapItem) => {
+      try {
+        const items = await request();
+        const firstItem = Array.isArray(items) ? items[0] : null;
+        if (firstItem) {
+          highlightEntries.set(key, mapItem(firstItem));
+          syncHighlights();
+        }
+      } catch {
+        // Keep the homepage responsive even when one section is slow or unavailable.
+      } finally {
+        pendingLoads -= 1;
+        if (pendingLoads === 0 && mounted) {
+          setIsLoadingHighlights(false);
+        }
+      }
+    };
+
+    let pendingLoads = 3;
+
+    loadSection('news', () => newsApi.getAll(), (item) => ({
+      title: item.title,
+      description: item.content,
+      action: { label: 'Read news', path: '/news' }
+    }));
+
+    loadSection('events', () => eventApi.getAll(), (item) => ({
+      title: item.name,
+      description: item.description,
+      action: { label: 'View events', path: '/events' }
+    }));
+
+    loadSection('achievements', () => achievementApi.getAll(), (item) => ({
+      title: item.title,
+      description: item.description,
+      action: { label: 'View achievements', path: '/achievements' }
+    }));
 
     return () => {
       mounted = false;
@@ -284,6 +325,10 @@ export default function HomePage() {
               </Box>
             </Grid>
           </Grid>
+        ) : isLoadingHighlights ? (
+          <Typography paragraph sx={{ color: 'rgba(255,255,255,0.78)' }}>
+            Loading latest updates...
+          </Typography>
         ) : (
           <Typography paragraph sx={{ color: 'rgba(255,255,255,0.78)' }}>No database updates are available yet.</Typography>
         )}

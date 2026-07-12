@@ -21,6 +21,7 @@ namespace anjk_api.Data
         public DbSet<Fixture> Fixtures => Set<Fixture>();
         public DbSet<PointTableEntry> PointTableEntries => Set<PointTableEntry>();
         public DbSet<CommitteeMember> CommitteeMembers => Set<CommitteeMember>();
+        public DbSet<Achievement> Achievements => Set<Achievement>();
         public DbSet<HeritageItem> HeritageItems => Set<HeritageItem>();
         public DbSet<HallOfFameItem> HallOfFameItems => Set<HallOfFameItem>();
         public DbSet<Village> Villages => Set<Village>();
