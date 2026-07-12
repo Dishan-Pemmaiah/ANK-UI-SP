@@ -1,0 +1,28 @@
+.club-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #0d3d2f;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.club-brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.club-links a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 18px;
+  font-weight: 500;
+}
+
+.club-links a.active,
+.club-links a:hover {
+  color: #f0c040;
+}

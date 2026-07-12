@@ -1,0 +1,74 @@
+:root {
+  --primary-bg: #0a0a0a;
+  --secondary-bg: #b30000;
+  --surface: #141414;
+  --surface-alt: #1f1f1f;
+  --text: #ffffff;
+  --text-muted: #d1d1d1;
+  --border: #3e3e3e;
+}
+
+body {
+  background-color: var(--primary-bg);
+  color: var(--text);
+  font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+}
+
+a {
+  color: var(--text);
+}
+
+button, .MuiButton-root {
+  text-transform: none;
+}
+
+.MuiPaper-root {
+  background-color: var(--surface);
+}
+
+.MuiCard-root {
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.MuiTypography-root {
+  color: var(--text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  letter-spacing: -0.02em;
+}
+
+.MuiAppBar-root {
+  background-color: var(--primary-bg) !important;
+}
+
+.MuiButton-contained {
+  background-color: var(--secondary-bg) !important;
+  color: var(--text) !important;
+}
+
+.MuiButton-text {
+  color: var(--text) !important;
+}
+
+.MuiTextField-root .MuiInputBase-root {
+  color: var(--text);
+}
+
+.MuiInputLabel-root {
+  color: var(--text-muted);
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: var(--border);
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--secondary-bg);
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--secondary-bg);
+}
