@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Divider, Button, Grid, Card, CardContent, Stack } from '@mui/material';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 import liveApi from '../../services/liveService';
+import { getHubBase } from '../../config/apiBase';
 
 const normalizeYouTubeUrl = (value) => {
   if (!value) return '';
@@ -65,10 +66,8 @@ export default function LivePage() {
   useEffect(() => {
     refreshLive();
 
-    const apiBase = process.env.REACT_APP_API_BASE || 'http://localhost:41809/api';
-    const hubBase = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
     const connection = new HubConnectionBuilder()
-      .withUrl(`${hubBase}/livehub`)
+      .withUrl(`${getHubBase()}/livehub`)
       .withAutomaticReconnect()
       .build();
 

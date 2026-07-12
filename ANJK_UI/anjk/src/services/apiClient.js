@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getApiBase } from '../config/apiBase';
 
-const BASE_URL = process.env.REACT_APP_API_BASE || 'http://localhost:41809/api';
+const BASE_URL = getApiBase();
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

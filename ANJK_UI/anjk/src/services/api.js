@@ -1,4 +1,6 @@
-const API_BASE = process.env.REACT_APP_API_BASE || 'https://example.com/api';
+import { getApiBase } from '../config/apiBase';
+
+const API_BASE = getApiBase();
 
 async function fetchJson(path) {
   const res = await fetch(`${API_BASE}${path}`);
