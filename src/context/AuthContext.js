@@ -1,5 +1,6 @@
-import { createContext, useMemo, useState } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import authApi from '../services/authService';
+import { supabase } from '../services/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -10,6 +11,68 @@ export function AuthProvider({ children }) {
   });
   const [token, setToken] = useState(() => localStorage.getItem('ank_token'));
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const hydrate = async () => {
+      try {
+        const session = await authApi.getActiveSession();
+        if (session?.access_token && session?.user?.email) {
+          const profile = await authApi.getProfile();
+          if (mounted) {
+            setToken(session.access_token);
+            setUser({ fullName: profile.fullName, role: profile.role, email: profile.email });
+            localStorage.setItem('ank_token', session.access_token);
+            localStorage.setItem('ank_user', JSON.stringify({ fullName: profile.fullName, role: profile.role, email: profile.email }));
+          }
+        }
+      } catch {
+        if (mounted) {
+          setToken(null);
+          setUser(null);
+          localStorage.removeItem('ank_token');
+          localStorage.removeItem('ank_user');
+        }
+      } finally {
+        if (mounted) {
+          setInitialized(true);
+        }
+      }
+    };
+
+    hydrate();
+
+    const subscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) {
+        return;
+      }
+
+      if (!session?.access_token) {
+        setToken(null);
+        setUser(null);
+        localStorage.removeItem('ank_token');
+        localStorage.removeItem('ank_user');
+        return;
+      }
+
+      try {
+        const profile = await authApi.getProfile();
+        setToken(session.access_token);
+        setUser({ fullName: profile.fullName, role: profile.role, email: profile.email });
+        localStorage.setItem('ank_token', session.access_token);
+        localStorage.setItem('ank_user', JSON.stringify({ fullName: profile.fullName, role: profile.role, email: profile.email }));
+      } catch {
+        setToken(session.access_token);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.data.subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (tokenValue, userData) => {
     setLoading(true);
@@ -39,8 +102,18 @@ export function AuthProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ user, token, loading, login, logout, updateUser, isAuthenticated: Boolean(token) }),
-    [user, token, loading]
+    () => ({
+      user,
+      token,
+      loading,
+      initialized,
+      login,
+      logout,
+      updateUser,
+      isAuthenticated: Boolean(token),
+      isAdmin: authApi.isAdminRole(user?.role)
+    }),
+    [user, token, loading, initialized]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

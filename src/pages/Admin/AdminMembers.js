@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Card, CardContent, Grid, TextField, Button, MenuItem } from '@mui/material';
+import { Alert, Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Card, CardContent, Grid, TextField, Button, MenuItem } from '@mui/material';
 import memberApi from '../../services/memberService';
 
 const emptyMember = {
@@ -18,6 +18,9 @@ export default function AdminMembers() {
   const [form, setForm] = useState(emptyMember);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [warningMessage, setWarningMessage] = useState('');
 
   useEffect(() => {
     loadMembers();
@@ -53,6 +56,9 @@ export default function AdminMembers() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setWarningMessage('');
     try {
       const payload = {
         fullName: form.fullName,
@@ -66,8 +72,14 @@ export default function AdminMembers() {
       const saved = editingId ? await memberApi.update(editingId, payload) : await memberApi.create(payload);
       setMembers((prev) => editingId ? prev.map((item) => (item.id === editingId ? saved : item)) : [saved, ...prev]);
       setSelectedMember(saved);
+      setSuccessMessage(editingId ? 'Member updated successfully.' : 'Member added successfully.');
+      if (saved?.__meta?.warning) {
+        setWarningMessage(saved.__meta.warning);
+      }
       resetForm();
     } catch (error) {
+      const message = error?.message || 'Failed to save member.';
+      setErrorMessage(message);
       console.error('Failed to save member', error);
     } finally {
       setSaving(false);
@@ -97,6 +109,9 @@ export default function AdminMembers() {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>Manage Members</Typography>
+      {errorMessage ? <Alert severity="error" sx={{ mb: 2 }}>{errorMessage}</Alert> : null}
+      {warningMessage ? <Alert severity="warning" sx={{ mb: 2 }}>{warningMessage}</Alert> : null}
+      {successMessage ? <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert> : null}
       <Paper sx={{ p: 3, mb: 3, background: '#141414' }}>
         <Typography variant="h6" gutterBottom>{editingId ? 'Edit Registered User' : 'Add Registered User'}</Typography>
         <Box component="form" onSubmit={handleSubmit}>

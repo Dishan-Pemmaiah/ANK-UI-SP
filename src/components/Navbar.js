@@ -129,7 +129,7 @@ export default function Navbar({ onDrawerToggle }) {
               <Typography sx={{ color: '#ffffff', fontWeight: 600 }}>
                 {auth.user?.fullName || 'Member'}
               </Typography>
-              {auth.user?.role === 'Admin' && (
+              {auth.isAdmin && (
                 <Button color="inherit" component={NavLink} to="/admin">
                   Admin
                 </Button>

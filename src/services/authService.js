@@ -3,6 +3,28 @@ import { ensureSupabaseConfigured } from './supabaseDb';
 
 const USERS_TABLE = 'AppUsers';
 
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const normalizeRole = (value) => String(value || '').trim().toLowerCase();
+
+const mapAuthError = (message) => {
+  const text = String(message || '').toLowerCase();
+
+  if (text.includes('invalid login credentials')) {
+    return 'Invalid email or password. Please try again.';
+  }
+
+  if (text.includes('email not confirmed')) {
+    return 'Your email is not confirmed yet. Please verify your inbox before logging in.';
+  }
+
+  if (text.includes('user already registered')) {
+    return 'This email is already registered. Please use login instead.';
+  }
+
+  return message || 'Authentication failed.';
+};
+
 const mapProfile = (row) => ({
   id: row.Id,
   fullName: row.FullName,
@@ -13,7 +35,7 @@ const mapProfile = (row) => ({
 });
 
 const fetchAppUserByEmail = async (email) => {
-  const response = await supabase.from(USERS_TABLE).select('*').eq('Email', email).maybeSingle();
+  const response = await supabase.from(USERS_TABLE).select('*').ilike('Email', normalizeEmail(email)).maybeSingle();
   if (response.error) {
     throw new Error(response.error.message);
   }
@@ -52,11 +74,49 @@ const upsertAppUser = async (payload) => {
 };
 
 const authApi = {
+  getActiveSession: async () => {
+    ensureSupabaseConfigured();
+    const response = await supabase.auth.getSession();
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    return response.data.session || null;
+  },
+  ensureAuthUser: async ({ email, password, fullName }) => {
+    ensureSupabaseConfigured();
+
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail || !password) {
+      return { created: false, warning: 'Email and password are required to create a login account.' };
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          fullName: fullName || ''
+        }
+      }
+    });
+
+    if (error) {
+      const mapped = mapAuthError(error.message);
+      if (mapped.toLowerCase().includes('already registered')) {
+        return { created: false, warning: mapped };
+      }
+      throw new Error(mapped);
+    }
+
+    return { created: Boolean(data?.user?.id), warning: '' };
+  },
   register: async (payload) => {
     ensureSupabaseConfigured();
 
+    const normalizedEmail = normalizeEmail(payload.email);
+
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: payload.email,
+      email: normalizedEmail,
       password: payload.password,
       options: {
         data: {
@@ -66,7 +126,7 @@ const authApi = {
     });
 
     if (signUpError) {
-      throw new Error(signUpError.message);
+      throw new Error(mapAuthError(signUpError.message));
     }
 
     const membershipStatus = payload.requestAdminApproval ? 'Pending Admin Approval' : 'Active';
@@ -74,7 +134,7 @@ const authApi = {
 
     const profile = await upsertAppUser({
       FullName: payload.fullName,
-      Email: payload.email,
+      Email: normalizedEmail,
       PasswordHash: '',
       Role: role,
       MembershipStatus: membershipStatus,
@@ -83,7 +143,7 @@ const authApi = {
 
     let session = signUpData.session;
     if (!session) {
-      const loginResult = await supabase.auth.signInWithPassword({ email: payload.email, password: payload.password });
+      const loginResult = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: payload.password });
       if (!loginResult.error) {
         session = loginResult.data.session;
       }
@@ -98,16 +158,18 @@ const authApi = {
   login: async (payload) => {
     ensureSupabaseConfigured();
 
+    const normalizedEmail = normalizeEmail(payload.email);
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: payload.email,
+      email: normalizedEmail,
       password: payload.password
     });
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(mapAuthError(error.message));
     }
 
-    const profile = await fetchAppUserByEmail(payload.email);
+    const profile = await fetchAppUserByEmail(normalizedEmail);
     if (!profile) {
       throw new Error('Profile not found for this account.');
     }
@@ -127,7 +189,7 @@ const authApi = {
       throw new Error('Not authenticated.');
     }
 
-    const profile = await fetchAppUserByEmail(email);
+    const profile = await fetchAppUserByEmail(normalizeEmail(email));
     if (!profile) {
       throw new Error('Profile not found.');
     }
@@ -143,7 +205,7 @@ const authApi = {
       throw new Error('Not authenticated.');
     }
 
-    const current = await fetchAppUserByEmail(email);
+    const current = await fetchAppUserByEmail(normalizeEmail(email));
     if (!current) {
       throw new Error('Profile not found.');
     }
@@ -155,6 +217,7 @@ const authApi = {
 
     return mapProfile(updated);
   },
+  isAdminRole: (role) => normalizeRole(role) === 'admin',
   logout: async () => {
     await supabase.auth.signOut();
   }

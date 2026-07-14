@@ -42,6 +42,8 @@ import AdminNews from './pages/Admin/AdminNews';
 import AdminGallery from './pages/Admin/AdminGallery';
 import AdminLive from './pages/Admin/AdminLive';
 import AdminAchievements from './pages/Admin/AdminAchievements';
+import AdminHomeContent from './pages/Admin/AdminHomeContent';
+import AdminContactSettings from './pages/Admin/AdminContactSettings';
 import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
@@ -129,6 +131,8 @@ function App() {
               <Route path="gallery" element={<AdminGallery />} />
               <Route path="live" element={<AdminLive />} />
               <Route path="achievements" element={<AdminAchievements />} />
+              <Route path="home-content" element={<AdminHomeContent />} />
+              <Route path="contact-settings" element={<AdminContactSettings />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
             </Route>

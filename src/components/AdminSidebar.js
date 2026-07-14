@@ -9,6 +9,8 @@ const items = [
   { label: 'Heritage', path: '/admin/heritage' },
   { label: 'Events', path: '/admin/events' },
   { label: 'Sports', path: '/admin/sports' },
+  { label: 'Home Content', path: '/admin/home-content' },
+  { label: 'Contact Settings', path: '/admin/contact-settings' },
   { label: 'News', path: '/admin/news' },
   { label: 'Gallery', path: '/admin/gallery' },
   { label: 'Live Updates', path: '/admin/live' },
