@@ -42,13 +42,21 @@ export default function SiteFooter() {
 
         <Grid item xs={12} sm={6} md={3}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Quick Links</Typography>
-          <Stack spacing={0.8}>
+          <Box component="ul" sx={{ m: 0, pl: 2.25, display: 'grid', gap: 0.35 }}>
             {(data.quickLinks || []).map((item) => (
-              <Link key={`${item.label}-${item.path}`} component={RouterLink} to={item.path} color="inherit" underline="hover">
-                {item.label}
-              </Link>
+              <Box key={`${item.label}-${item.path}`} component="li" sx={{ color: 'rgba(255,255,255,0.82)', lineHeight: 1.2 }}>
+                <Link
+                  component={RouterLink}
+                  to={item.path}
+                  color="inherit"
+                  underline="hover"
+                  sx={{ fontSize: '0.9rem', lineHeight: 1.2 }}
+                >
+                  {item.label}
+                </Link>
+              </Box>
             ))}
-          </Stack>
+          </Box>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
