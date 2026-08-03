@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Box, Button, Grid, Paper, TextField, Typography } from '@mui/material';
-import homeContentApi from '../../services/homeContentService';
+import homeContentApi, { HOME_CONTENT_DEFAULTS } from '../../services/homeContentService';
 
 const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -19,7 +19,10 @@ export default function AdminHomeContent() {
   useEffect(() => {
     homeContentApi.get()
       .then((data) => setForm(data))
-      .catch((err) => setError(err?.message || 'Failed to load home content.'))
+      .catch((err) => {
+        setError(err?.message || 'Failed to load home content.');
+        setForm({ ...HOME_CONTENT_DEFAULTS });
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -61,7 +64,7 @@ export default function AdminHomeContent() {
   }
 
   if (!form) {
-    return <Typography>Unable to load home content.</Typography>;
+    return <Typography>Loading home content...</Typography>;
   }
 
   return (

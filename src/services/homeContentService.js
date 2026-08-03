@@ -12,6 +12,8 @@ const defaultContent = {
   announcements: ''
 };
 
+export const HOME_CONTENT_DEFAULTS = { ...defaultContent };
+
 const normalize = (row) => {
   if (!row) {
     return { ...defaultContent };
