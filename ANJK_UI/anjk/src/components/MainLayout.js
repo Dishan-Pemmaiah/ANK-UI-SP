@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, Container, Drawer } from '@mui/material';
 import Navbar from './Navbar';
 import PublicSidebar from './PublicSidebar';
 import SiteFooter from './SiteFooter';
+import { getApiBase } from '../config/apiBase';
 
 const drawerWidth = 260;
 
 export default function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    // Warm up the backend on first page load to reduce cold-start latency.
+    fetch(`${getApiBase()}/Live`, { method: 'GET' }).catch(() => {});
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen((prev) => !prev);
