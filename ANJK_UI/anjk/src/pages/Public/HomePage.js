@@ -6,14 +6,43 @@ import newsApi from '../../services/newsService';
 import eventApi from '../../services/eventService';
 import achievementApi from '../../services/achievementService';
 import liveApi from '../../services/liveService';
+import siteContentService, { SITE_CONTENT_KEYS } from '../../services/siteContentService';
 
 const logoSrc = '/ank-logo.jpeg';
 const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
+const defaultHomeCms = {
+  heroTitle: 'Anjigeri Naad Koota',
+  heroSubtitle: 'A bold home for Kodava heritage, competitive sport, village unity, live updates, and club history - built from the database, not static copy.',
+  primaryCtaLabel: 'Explore ANK',
+  primaryCtaPath: '/about',
+  secondaryCtaLabel: 'View sports history',
+  secondaryCtaPath: '/sports',
+  contactBanner: 'Keep the homepage clean while still giving visitors an easy way to reach the club or follow updates.',
+  instagramUrl
+};
 
 export default function HomePage() {
   const [highlights, setHighlights] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
+  const [homeCms, setHomeCms] = useState(defaultHomeCms);
+
+  useEffect(() => {
+    siteContentService.getAll()
+      .then((data) => {
+        setHomeCms({
+          heroTitle: data[SITE_CONTENT_KEYS.homeHeroTitle] || defaultHomeCms.heroTitle,
+          heroSubtitle: data[SITE_CONTENT_KEYS.homeHeroSubtitle] || defaultHomeCms.heroSubtitle,
+          primaryCtaLabel: data[SITE_CONTENT_KEYS.homePrimaryCtaLabel] || defaultHomeCms.primaryCtaLabel,
+          primaryCtaPath: data[SITE_CONTENT_KEYS.homePrimaryCtaPath] || defaultHomeCms.primaryCtaPath,
+          secondaryCtaLabel: data[SITE_CONTENT_KEYS.homeSecondaryCtaLabel] || defaultHomeCms.secondaryCtaLabel,
+          secondaryCtaPath: data[SITE_CONTENT_KEYS.homeSecondaryCtaPath] || defaultHomeCms.secondaryCtaPath,
+          contactBanner: data[SITE_CONTENT_KEYS.homeContactBanner] || defaultHomeCms.contactBanner,
+          instagramUrl: data[SITE_CONTENT_KEYS.contactInstagramUrl] || defaultHomeCms.instagramUrl
+        });
+      })
+      .catch(() => setHomeCms(defaultHomeCms));
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -147,18 +176,18 @@ export default function HomePage() {
               </Box>
             </Stack>
             <Typography component="h1" sx={{ fontSize: { xs: '2.8rem', md: '4.8rem' }, lineHeight: 0.95, fontWeight: 900, letterSpacing: '-0.04em', textTransform: 'uppercase', maxWidth: 900 }}>
-              Anjigeri Naad Koota
+              {homeCms.heroTitle}
             </Typography>
             <Typography sx={{ mt: 2.5, fontSize: { xs: '1rem', md: '1.18rem' }, maxWidth: 720, color: 'rgba(255,255,255,0.82)', lineHeight: 1.8 }}>
-              A bold home for Kodava heritage, competitive sport, village unity, live updates, and club history - built from the database, not static copy.
+              {homeCms.heroSubtitle}
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
-              <Button component={Link} to="/about" variant="contained" size="large" sx={{ px: 3.5, py: 1.5 }}>
-                Explore ANK
+              <Button component={Link} to={homeCms.primaryCtaPath || '/about'} variant="contained" size="large" sx={{ px: 3.5, py: 1.5 }}>
+                {homeCms.primaryCtaLabel}
               </Button>
-              <Button component={Link} to="/sports" variant="outlined" size="large" sx={{ px: 3.5, py: 1.5, borderColor: 'rgba(255,255,255,0.24)', color: '#fff' }}>
-                View sports history
+              <Button component={Link} to={homeCms.secondaryCtaPath || '/sports'} variant="outlined" size="large" sx={{ px: 3.5, py: 1.5, borderColor: 'rgba(255,255,255,0.24)', color: '#fff' }}>
+                {homeCms.secondaryCtaLabel}
               </Button>
             </Stack>
           </Grid>
@@ -206,7 +235,7 @@ export default function HomePage() {
               Contact and Instagram in one place
             </Typography>
             <Typography sx={{ color: 'rgba(255,255,255,0.72)', maxWidth: 760, mt: 1 }}>
-              Keep the homepage clean while still giving visitors an easy way to reach the club or follow updates.
+              {homeCms.contactBanner}
             </Typography>
           </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
@@ -215,7 +244,7 @@ export default function HomePage() {
             </Button>
             <Button
               component="a"
-              href={instagramUrl}
+              href={homeCms.instagramUrl || instagramUrl}
               target="_blank"
               rel="noreferrer"
               variant="outlined"
@@ -249,7 +278,7 @@ export default function HomePage() {
                 <Typography sx={{ color: 'rgba(255,255,255,0.75)', mt: 1.25 }}>
                   See photos, updates, event coverage, and match highlights on Instagram.
                 </Typography>
-                <Button component="a" href={instagramUrl} target="_blank" rel="noreferrer" variant="outlined" color="inherit" sx={{ mt: 2 }} startIcon={<InstagramIcon />}>
+                <Button component="a" href={homeCms.instagramUrl || instagramUrl} target="_blank" rel="noreferrer" variant="outlined" color="inherit" sx={{ mt: 2 }} startIcon={<InstagramIcon />}>
                   Open Instagram
                 </Button>
               </CardContent>

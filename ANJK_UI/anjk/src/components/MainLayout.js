@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Box, Container, Drawer } from '@mui/material';
 import Navbar from './Navbar';
 import PublicSidebar from './PublicSidebar';
+import SiteFooter from './SiteFooter';
 
 const drawerWidth = 260;
 
@@ -48,6 +49,7 @@ export default function MainLayout() {
 
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4, px: { xs: 2, md: 4 }, color: '#ffffff' }}>
           <Outlet />
+          <SiteFooter />
         </Container>
       </Box>
     </>

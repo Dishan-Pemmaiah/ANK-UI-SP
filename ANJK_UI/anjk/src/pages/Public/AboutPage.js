@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
-import aboutApi from '../../services/aboutService';
+import siteContentService from '../../services/siteContentService';
 
 export default function AboutPage() {
   const [sections, setSections] = useState([]);
 
   useEffect(() => {
-    aboutApi.getAll()
+    siteContentService.getPublicAboutSections()
       .then((data) => setSections(data))
       .catch(() => setSections([]));
   }, []);

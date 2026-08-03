@@ -1,9 +1,35 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Box, Typography, TextField, Button, Grid, Paper, Card, CardContent, Stack } from '@mui/material';
+import siteContentService, { SITE_CONTENT_KEYS } from '../../services/siteContentService';
 
-const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
+const defaultInstagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
 
 export default function ContactPage() {
+  const [cms, setCms] = useState({
+    intro: 'Use the form for general messages, or follow the club on Instagram for photos, updates, and announcements.',
+    email: '',
+    phone: '',
+    address: '',
+    instagramUrl: defaultInstagramUrl
+  });
+
+  useEffect(() => {
+    siteContentService.getAll()
+      .then((data) => {
+        setCms({
+          intro: data[SITE_CONTENT_KEYS.contactIntro] || 'Use the form for general messages, or follow the club on Instagram for photos, updates, and announcements.',
+          email: data[SITE_CONTENT_KEYS.contactEmail] || '',
+          phone: data[SITE_CONTENT_KEYS.contactPhone] || '',
+          address: data[SITE_CONTENT_KEYS.contactAddress] || '',
+          instagramUrl: data[SITE_CONTENT_KEYS.contactInstagramUrl] || defaultInstagramUrl
+        });
+      })
+      .catch(() => {
+        setCms((prev) => ({ ...prev, instagramUrl: defaultInstagramUrl }));
+      });
+  }, []);
+
   return (
     <Box>
       <Typography variant="overline" sx={{ letterSpacing: 3, color: '#d9b18f' }}>
@@ -13,7 +39,7 @@ export default function ContactPage() {
         Let’s stay connected
       </Typography>
       <Typography sx={{ mb: 3, maxWidth: 760, color: 'rgba(255,255,255,0.78)' }}>
-        Use the form for general messages, or follow the club on Instagram for photos, updates, and announcements.
+        {cms.intro}
       </Typography>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -25,7 +51,7 @@ export default function ContactPage() {
               <Typography sx={{ color: 'rgba(255,255,255,0.75)', mt: 1 }}>
                 Follow the club for match photos, event coverage, heritage posts, and live updates.
               </Typography>
-              <Button component="a" href={instagramUrl} target="_blank" rel="noreferrer" variant="contained" sx={{ mt: 2 }}>
+              <Button component="a" href={cms.instagramUrl || defaultInstagramUrl} target="_blank" rel="noreferrer" variant="contained" sx={{ mt: 2 }}>
                 Open Instagram
               </Button>
             </CardContent>
@@ -52,6 +78,9 @@ export default function ContactPage() {
               <Typography sx={{ color: 'rgba(255,255,255,0.75)', mt: 1 }}>
                 Ask about memberships, events, heritage content, committee updates, or general club information.
               </Typography>
+              {cms.email ? <Typography sx={{ mt: 1.25, color: 'rgba(255,255,255,0.82)' }}>Email: {cms.email}</Typography> : null}
+              {cms.phone ? <Typography sx={{ color: 'rgba(255,255,255,0.82)' }}>Phone: {cms.phone}</Typography> : null}
+              {cms.address ? <Typography sx={{ color: 'rgba(255,255,255,0.82)' }}>Address: {cms.address}</Typography> : null}
             </CardContent>
           </Card>
         </Grid>

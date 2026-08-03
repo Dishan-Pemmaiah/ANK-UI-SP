@@ -12,12 +12,14 @@ const items = [
   { label: 'News', path: '/admin/news' },
   { label: 'Gallery', path: '/admin/gallery' },
   { label: 'Live Updates', path: '/admin/live' },
-  { label: 'Achievements', path: '/admin/achievements' }
+  { label: 'Achievements', path: '/admin/achievements' },
+  { label: 'Home CMS', path: '/admin/home-content' },
+  { label: 'Contact and Footer CMS', path: '/admin/contact-settings' }
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ mobile = false, onNavigate }) {
   return (
-    <Box sx={{ width: 240, bgcolor: '#111111', minHeight: '100vh', p: 2 }}>
+    <Box sx={{ width: mobile ? '100%' : 240, bgcolor: '#111111', minHeight: mobile ? '100%' : '100vh', p: 2 }}>
       <Typography variant="h6" gutterBottom sx={{ color: '#ffffff' }}>
         Admin Control
       </Typography>
@@ -27,6 +29,7 @@ export default function AdminSidebar() {
             component={NavLink}
             to={item.path}
             key={item.path}
+            onClick={onNavigate}
             sx={{
               color: '#ffffff',
               mb: 1,
