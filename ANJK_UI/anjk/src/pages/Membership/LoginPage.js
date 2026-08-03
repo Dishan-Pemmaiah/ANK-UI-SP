@@ -17,11 +17,14 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await authApi.login(form);
+      const result = await authApi.login({
+        email: String(form.email || '').trim().toLowerCase(),
+        password: form.password
+      });
       await auth.login(result.token, { fullName: result.fullName, role: result.role });
       navigate('/profile');
     } catch (err) {
-      const message = err?.response?.data?.title || err?.response?.data?.message || err?.message || 'Login failed. Please check your credentials.';
+      const message = err?.response?.data?.title || err?.response?.data?.message || err?.message || 'Login failed. Please check your credentials and server status.';
       setError(message);
     } finally {
       setIsSubmitting(false);

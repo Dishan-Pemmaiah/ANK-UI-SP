@@ -8,12 +8,22 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    authApi.getProfile().then((data) => {
+  const loadProfile = async () => {
+    setError('');
+    try {
+      const data = await authApi.getProfile();
       setProfile(data);
       setName(data.fullName);
-    });
+    } catch (err) {
+      const messageText = err?.response?.data?.title || err?.response?.data?.message || err?.message || 'Unable to load profile details.';
+      setError(messageText);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
   }, []);
 
   const handleUpdate = async () => {
@@ -24,7 +34,18 @@ export default function ProfilePage() {
   };
 
   if (!profile) {
-    return <Typography>Loading profile...</Typography>;
+    return (
+      <Box>
+        <Typography>{error ? 'Unable to load profile.' : 'Loading profile...'}</Typography>
+        {error ? (
+          <Box sx={{ mt: 2 }}>
+            <Typography color="error" sx={{ mb: 1.5 }}>{error}</Typography>
+            <Button variant="contained" onClick={loadProfile}>Retry</Button>
+            <Button sx={{ ml: 2 }} variant="outlined" onClick={auth?.logout}>Logout</Button>
+          </Box>
+        ) : null}
+      </Box>
+    );
   }
 
   return (
