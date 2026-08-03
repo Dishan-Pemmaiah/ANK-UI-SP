@@ -9,7 +9,7 @@ export default function AdminDashboard() {
     { title: 'Manage Heritage', route: '/admin/heritage' },
     { title: 'Manage Events', route: '/admin/events' },
     { title: 'Manage Sports', route: '/admin/sports' },
-    { title: 'Manage News', route: '/admin/news' },
+    { title: 'Manage Updates', route: '/admin/updates' },
     { title: 'Manage Gallery', route: '/admin/gallery' }
   ];
 

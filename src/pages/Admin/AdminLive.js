@@ -55,10 +55,13 @@ export default function AdminLive() {
     if (!cleanedMessage && !cleanedLink) return;
     setSending(true);
     try {
-      const payload = [
-        cleanedMessage,
-        cleanedLink ? normalizeYouTubeUrl(cleanedLink) : ''
-      ].filter(Boolean).join('\n');
+      const normalizedLink = cleanedLink ? normalizeYouTubeUrl(cleanedLink) : '';
+      const payload = {
+        message: cleanedMessage,
+        description: cleanedMessage,
+        streamUrl: normalizedLink,
+        youtubeUrl: normalizedLink
+      };
 
       if (editingId) {
         await liveApi.update(editingId, payload);
@@ -79,7 +82,7 @@ export default function AdminLive() {
 
   const handleEdit = (item) => {
     const text = String(item.message || item.description || '').trim();
-    const link = text.match(/https?:\/\/[^\s]+/i)?.[0] || '';
+    const link = item.streamUrl || item.youtubeUrl || text.match(/https?:\/\/[^\s]+/i)?.[0] || '';
     const plainMessage = link ? text.replace(link, '').trim() : text;
 
     setEditingId(item.id);

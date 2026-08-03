@@ -73,7 +73,7 @@ export default function HomePage() {
     loadSection('news', () => newsApi.getAll(), (item) => ({
       title: item.title,
       description: item.content,
-      action: { label: 'Read news', path: '/news' }
+      action: { label: 'Read updates', path: '/updates' }
     }));
 
     loadSection('events', () => eventApi.getAll(), (item) => ({
@@ -283,9 +283,27 @@ export default function HomePage() {
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {[
-          { label: 'Sports tracked', value: '4+', note: 'Hockey, cricket, football, marathon' },
-          { label: 'Content sections', value: '8+', note: 'About, committee, heritage, news and more' },
-          { label: 'Live + history', value: '2', note: 'Played and hosted states are separated' }
+          {
+            label: 'What is updated',
+            value: 'Daily',
+            note: 'News, event details, and achievements are refreshed from the latest club entries.',
+            actionLabel: 'Open Updates',
+            actionPath: '/updates'
+          },
+          {
+            label: 'Live and news',
+            value: 'Now',
+            note: 'All live broadcasts and news posts are now available on one updates page.',
+            actionLabel: 'Open Updates',
+            actionPath: '/updates'
+          },
+          {
+            label: 'Need help?',
+            value: 'Contact',
+            note: 'Reach the committee for membership, event queries, and community information.',
+            actionLabel: 'Contact Committee',
+            actionPath: '/contact'
+          }
         ].map((item) => (
           <Grid item xs={12} md={4} key={item.label}>
             <Card sx={{ background: '#131313', height: '100%' }}>
@@ -293,6 +311,9 @@ export default function HomePage() {
                 <Typography variant="overline" sx={{ letterSpacing: 2, color: '#d9b18f' }}>{item.label}</Typography>
                 <Typography variant="h3" sx={{ mt: 1, fontWeight: 900 }}>{item.value}</Typography>
                 <Typography sx={{ color: 'rgba(255,255,255,0.75)' }}>{item.note}</Typography>
+                <Button component={Link} to={item.actionPath} variant="outlined" color="inherit" sx={{ mt: 2 }}>
+                  {item.actionLabel}
+                </Button>
               </CardContent>
             </Card>
           </Grid>

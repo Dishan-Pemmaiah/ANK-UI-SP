@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Box, Container, Drawer } from '@mui/material';
+import { Box, Drawer } from '@mui/material';
 import Navbar from './Navbar';
 import PublicSidebar from './PublicSidebar';
 import SiteFooter from './SiteFooter';
@@ -24,7 +24,7 @@ export default function MainLayout() {
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'stretch',
           flexDirection: { xs: 'column', md: 'row' },
           minHeight: 'calc(100vh - 64px)',
           backgroundColor: '#0a0a0a'
@@ -43,14 +43,38 @@ export default function MainLayout() {
           <PublicSidebar mobile onNavigate={closeDrawer} />
         </Drawer>
 
-        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <Box sx={{ display: { xs: 'none', md: 'block' }, alignSelf: 'stretch' }}>
           <PublicSidebar />
         </Box>
 
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 1, px: { xs: 2, md: 4 }, color: '#ffffff' }}>
-          <Outlet />
+        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
+          <Box
+            component="main"
+            sx={{
+              mt: { xs: 3, md: 4 },
+              mb: { xs: 2, md: 3 },
+              px: { xs: 2, md: 3, lg: 4 },
+              color: '#ffffff',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%'
+            }}
+          >
+            <Box
+              sx={{
+                flex: 1,
+                pb: { xs: 2, md: 3 },
+                width: '100%',
+                maxWidth: 1320,
+                mx: 'auto'
+              }}
+            >
+              <Outlet />
+            </Box>
+          </Box>
           <SiteFooter />
-        </Container>
+        </Box>
       </Box>
     </>
   );

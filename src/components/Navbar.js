@@ -6,8 +6,48 @@ import AuthContext from '../context/AuthContext';
 import newsApi from '../services/newsService';
 import eventApi from '../services/eventService';
 import liveApi from '../services/liveService';
+import sportsApi from '../services/sportsService';
 
 const logoSrc = '/ank-logo.jpeg';
+
+const titleCase = (value) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+
+const parseTypedCategory = (message, fallback) => {
+  const text = String(message || '').trim();
+  const match = text.match(/^([a-zA-Z ]{3,20})\s*[:|-]\s*/);
+
+  if (!match) {
+    return { category: fallback, text };
+  }
+
+  const typedCategory = titleCase(match[1].trim());
+  const cleaned = text.slice(match[0].length).trim();
+
+  return {
+    category: typedCategory || fallback,
+    text: cleaned || text
+  };
+};
+
+const stripUrls = (value) => String(value || '')
+  .replace(/https?:\/\/[^\s]+/gi, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const buildAnnouncement = (rawText, fallbackType, path, fallbackText) => {
+  const parsed = parseTypedCategory(stripUrls(rawText), fallbackType);
+
+  return {
+    type: parsed.category || fallbackType,
+    text: parsed.text || fallbackText,
+    path
+  };
+};
+
+const toTime = (value) => {
+  const parsed = new Date(value || '').getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 export default function Navbar({ onDrawerToggle }) {
   const auth = useContext(AuthContext);
@@ -18,27 +58,89 @@ export default function Navbar({ onDrawerToggle }) {
   useEffect(() => {
     let mounted = true;
 
-    Promise.all([
-      newsApi.getAll().catch(() => []),
-      eventApi.getAll().catch(() => []),
-      liveApi.getHistory().catch(() => [])
-    ]).then(([news, events, liveHistory]) => {
-      if (!mounted) {
-        return;
-      }
+    const loadAnnouncements = () => {
+      Promise.all([
+        newsApi.getAll().catch(() => []),
+        eventApi.getAll().catch(() => []),
+        liveApi.getCurrent().catch(() => null),
+        sportsApi.getTournaments().catch(() => [])
+      ]).then(([news, events, liveCurrent, sports]) => {
+        if (!mounted) {
+          return;
+        }
 
-      const nextAnnouncements = [
-        news[0] ? { text: `News: ${news[0].title}`, path: '/news' } : null,
-        events[0] ? { text: `Event: ${events[0].name}`, path: '/events' } : null,
-        liveHistory[0] ? { text: `Live: ${liveHistory[0].message}`, path: '/live' } : null
-      ].filter(Boolean);
+        const sortedNews = [...(news || [])].sort((a, b) => {
+          const timeA = toTime(a.publishedOn || a.createdOn || a.createdAt);
+          const timeB = toTime(b.publishedOn || b.createdOn || b.createdAt);
 
-      setAnnouncements(nextAnnouncements);
-      setActiveIndex(0);
-    });
+          if (timeA !== timeB) {
+            return timeB - timeA;
+          }
+
+          return Number(b.id || 0) - Number(a.id || 0);
+        });
+
+        const latestEvent = events[0] || null;
+        const latestSportsLive = (sports || []).find((item) => {
+          const status = String(item?.status || '').toLowerCase();
+          const type = String(item?.tournamentType || '').toLowerCase();
+          return status === 'live' || type === 'live';
+        });
+
+        const newsAnnouncements = sortedNews
+          .filter(Boolean)
+          .slice(0, 20)
+          .map((item) => buildAnnouncement(
+            item.title || item.heading || item.content,
+            item.category || item.type || 'News',
+            '/updates',
+            'Latest news update'
+          ));
+
+        const nextAnnouncements = [
+          ...newsAnnouncements,
+          latestEvent
+            ? buildAnnouncement(
+              latestEvent.name || latestEvent.title || latestEvent.description,
+              latestEvent.category || latestEvent.type || 'Event',
+              '/events',
+              'Latest event update'
+            )
+            : null,
+          latestSportsLive
+            ? buildAnnouncement(
+              latestSportsLive.currentTournament || latestSportsLive.matchSchedule || latestSportsLive.tournamentName || latestSportsLive.description,
+              latestSportsLive.category || latestSportsLive.type || 'Sports Live',
+              '/sports',
+              'Live sports update'
+            )
+            : null,
+          liveCurrent
+            ? buildAnnouncement(
+              liveCurrent.message || liveCurrent.description || liveCurrent.title,
+              liveCurrent.category || liveCurrent.type || 'Live',
+              '/updates',
+              'Latest live update'
+            )
+            : null
+        ].filter(Boolean);
+
+        setAnnouncements(nextAnnouncements);
+        setActiveIndex((previous) => {
+          if (!nextAnnouncements.length) {
+            return 0;
+          }
+          return Math.min(previous, nextAnnouncements.length - 1);
+        });
+      });
+    };
+
+    loadAnnouncements();
+    const refreshInterval = setInterval(loadAnnouncements, 15000);
 
     return () => {
       mounted = false;
+      clearInterval(refreshInterval);
     };
   }, []);
 
@@ -82,7 +184,7 @@ export default function Navbar({ onDrawerToggle }) {
 
         <Box
           component="button"
-          onClick={() => navigate(announcements[activeIndex]?.path || '/news')}
+          onClick={() => navigate(announcements[activeIndex]?.path || '/updates')}
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -116,7 +218,7 @@ export default function Navbar({ onDrawerToggle }) {
               textTransform: 'uppercase'
             }}
           >
-            Live
+            {announcements[activeIndex]?.type || 'Update'}
           </Typography>
           <Typography noWrap sx={{ fontSize: '0.9rem', color: '#ffffff' }}>
             {announcements[activeIndex]?.text || 'Latest updates load from the database.'}

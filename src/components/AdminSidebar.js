@@ -8,12 +8,16 @@ const items = [
   { label: 'Committee', path: '/admin/committee' },
   { label: 'Heritage', path: '/admin/heritage' },
   { label: 'Events', path: '/admin/events' },
-  { label: 'Sports', path: '/admin/sports' },
+  { label: 'Sports Overview', path: '/admin/sports' },
+  { label: 'Sports Hosted', path: '/admin/sports/hosted' },
+  { label: 'Sports External', path: '/admin/sports/external' },
+  { label: 'Sports Live', path: '/admin/sports/live' },
+  { label: 'Sports Fixtures', path: '/admin/sports/fixtures' },
+  { label: 'Sports History', path: '/admin/sports/history' },
   { label: 'Home Content', path: '/admin/home-content' },
   { label: 'Contact Settings', path: '/admin/contact-settings' },
-  { label: 'News', path: '/admin/news' },
+  { label: 'Updates', path: '/admin/updates' },
   { label: 'Gallery', path: '/admin/gallery' },
-  { label: 'Live Updates', path: '/admin/live' },
   { label: 'Achievements', path: '/admin/achievements' }
 ];
 

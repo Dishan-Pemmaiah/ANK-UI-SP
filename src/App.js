@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import MainLayout from './components/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -7,7 +7,7 @@ import AboutPage from './pages/Public/AboutPage';
 import CommitteePage from './pages/Public/CommitteePage';
 import ContactPage from './pages/Public/ContactPage';
 import GalleryPage from './pages/Public/GalleryPage';
-import NewsPage from './pages/Public/NewsPage';
+import UpdatesPage from './pages/Public/UpdatesPage';
 import AchievementsPage from './pages/Public/AchievementsPage';
 import HeritagePage from './pages/Public/HeritagePage';
 import HallOfFamePage from './pages/Public/HallOfFamePage';
@@ -29,7 +29,6 @@ import EventsPage from './pages/Events/EventsPage';
 import EventDetailPage from './pages/Events/EventDetailPage';
 import EventFormPage from './pages/Events/EventFormPage';
 import SportsPage from './pages/Sports/SportsPage';
-import LivePage from './pages/Live/LivePage';
 import AdminLayout from './pages/Admin/AdminLayout';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import AdminMembers from './pages/Admin/AdminMembers';
@@ -38,9 +37,8 @@ import AdminCommittee from './pages/Admin/AdminCommittee';
 import AdminHeritage from './pages/Admin/AdminHeritage';
 import AdminEvents from './pages/Admin/AdminEvents';
 import AdminSports from './pages/Admin/AdminSports';
-import AdminNews from './pages/Admin/AdminNews';
+import AdminUpdates from './pages/Admin/AdminUpdates';
 import AdminGallery from './pages/Admin/AdminGallery';
-import AdminLive from './pages/Admin/AdminLive';
 import AdminAchievements from './pages/Admin/AdminAchievements';
 import AdminHomeContent from './pages/Admin/AdminHomeContent';
 import AdminContactSettings from './pages/Admin/AdminContactSettings';
@@ -96,7 +94,8 @@ function App() {
             <Route path="committee" element={<CommitteePage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="gallery" element={<GalleryPage />} />
-            <Route path="news" element={<NewsPage />} />
+            <Route path="updates" element={<UpdatesPage />} />
+            <Route path="news" element={<Navigate to="/updates" replace />} />
             <Route path="heritage" element={<HeritagePage />} />
             <Route path="hall-of-fame" element={<HallOfFamePage />} />
             <Route path="villages" element={<VillagesPage />} />
@@ -113,11 +112,16 @@ function App() {
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="sports" element={<SportsPage />} />
+            <Route path="sports/hosted" element={<SportsPage />} />
+            <Route path="sports/external" element={<SportsPage />} />
+            <Route path="sports/live" element={<SportsPage />} />
+            <Route path="sports/fixtures" element={<SportsPage />} />
+            <Route path="sports/history" element={<SportsPage />} />
             <Route path="events" element={<EventsPage />} />
             <Route path="events/:id" element={<EventDetailPage />} />
             <Route path="events/create" element={<ProtectedRoute requiredRole="Admin"><EventFormPage /></ProtectedRoute>} />
             <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="live" element={<LivePage />} />
+            <Route path="live" element={<Navigate to="/updates" replace />} />
             <Route path="achievements" element={<AchievementsPage />} />
             <Route path="admin" element={<ProtectedRoute requiredRole="Admin"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
@@ -127,9 +131,15 @@ function App() {
               <Route path="heritage" element={<AdminHeritage />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="sports" element={<AdminSports />} />
-              <Route path="news" element={<AdminNews />} />
+              <Route path="sports/hosted" element={<AdminSports />} />
+              <Route path="sports/external" element={<AdminSports />} />
+              <Route path="sports/live" element={<AdminSports />} />
+              <Route path="sports/fixtures" element={<AdminSports />} />
+              <Route path="sports/history" element={<AdminSports />} />
+              <Route path="updates" element={<AdminUpdates />} />
+              <Route path="news" element={<AdminUpdates />} />
               <Route path="gallery" element={<AdminGallery />} />
-              <Route path="live" element={<AdminLive />} />
+              <Route path="live" element={<AdminUpdates />} />
               <Route path="achievements" element={<AdminAchievements />} />
               <Route path="home-content" element={<AdminHomeContent />} />
               <Route path="contact-settings" element={<AdminContactSettings />} />

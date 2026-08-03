@@ -42,12 +42,13 @@ const parseBroadcastText = (value) => {
 const parseHistoryItem = (item, index) => {
   const rawText = String(item?.message || item?.description || '').trim();
   const parsed = parseBroadcastText(rawText);
+  const explicitStreamUrl = normalizeYouTubeUrl(item?.streamUrl || item?.youtubeUrl || item?.streamLink || '');
 
   return {
     id: item?.id || `history-${index}`,
     title: item?.title || `Live update ${index + 1}`,
     message: parsed.message,
-    streamUrl: parsed.streamUrl,
+    streamUrl: explicitStreamUrl || parsed.streamUrl,
     createdOn: item?.createdOn || item?.createdAt || ''
   };
 };
@@ -75,7 +76,9 @@ export default function LivePage() {
 
   const currentText = String(currentUpdate?.message || currentUpdate?.description || currentUpdate?.title || '').trim();
   const currentBroadcast = parseBroadcastText(currentText);
-  const currentHasStream = Boolean(currentBroadcast.streamUrl);
+  const currentExplicitStream = normalizeYouTubeUrl(currentUpdate?.streamUrl || currentUpdate?.youtubeUrl || currentUpdate?.streamLink || '');
+  const currentStreamUrl = currentExplicitStream || currentBroadcast.streamUrl;
+  const currentHasStream = Boolean(currentStreamUrl);
   const seen = new Set();
   const liveItems = [currentUpdate, ...history]
     .filter(Boolean)
@@ -109,7 +112,7 @@ export default function LivePage() {
               <Box sx={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 2, overflow: 'hidden', background: '#000' }}>
                 <Box
                   component="iframe"
-                  src={currentBroadcast.streamUrl}
+                  src={currentStreamUrl}
                   title="ANK live stream"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
@@ -136,8 +139,8 @@ export default function LivePage() {
                   <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.75)' }}>
                     {currentBroadcast.message || 'No current live message.'}
                   </Typography>
-                  {currentBroadcast.streamUrl ? (
-                    <Button component="a" href={currentBroadcast.streamUrl} target="_blank" rel="noreferrer" variant="contained" sx={{ mt: 2 }}>
+                  {currentStreamUrl ? (
+                    <Button component="a" href={currentStreamUrl} target="_blank" rel="noreferrer" variant="contained" sx={{ mt: 2 }}>
                       Open stream on YouTube
                     </Button>
                   ) : null}

@@ -8,10 +8,10 @@ const items = [
   { label: 'Home', path: '/' },
   { label: 'About', path: '/about' },
   { label: 'Committee', path: '/committee' },
-  { label: 'News', path: '/news' },
+  { label: 'Updates', path: '/updates' },
   { label: 'Gallery', path: '/gallery' },
   { label: 'Events', path: '/events' },
-  { label: 'Live', path: '/live' },
+  { label: 'Sports', path: '/sports' },
   { label: 'Achievements', path: '/achievements' }
 ];
 
