@@ -2,6 +2,11 @@ import { createRow, listRows, updateRow } from './supabaseDb';
 
 const TABLE = 'HomePageContents';
 
+const isMissingTableError = (error) => {
+  const message = error?.message || '';
+  return /table/i.test(message) && /schema cache|does not exist|not found/i.test(message);
+};
+
 const defaultContent = {
   heroTitle: 'Anjigeri Naad Koota',
   heroSubtitle: 'Community. Sport. Heritage.',
@@ -28,26 +33,45 @@ const normalize = (row) => {
 
 const homeContentApi = {
   get: async () => {
-    const rows = await listRows(TABLE, { orderBy: 'Id', ascending: true, limit: 1 });
-    return normalize(rows[0]);
+    try {
+      const rows = await listRows(TABLE, { orderBy: 'Id', ascending: true, limit: 1 });
+      return normalize(rows[0]);
+    } catch (error) {
+      if (isMissingTableError(error)) {
+        return normalize(null);
+      }
+      throw error;
+    }
   },
   save: async (payload) => {
-    const rows = await listRows(TABLE, { orderBy: 'Id', ascending: true, limit: 1 });
-    const existing = rows[0];
+    try {
+      const rows = await listRows(TABLE, { orderBy: 'Id', ascending: true, limit: 1 });
+      const existing = rows[0];
 
-    const data = {
-      ...defaultContent,
-      ...payload,
-      homeImages: Array.isArray(payload?.homeImages) ? payload.homeImages : []
-    };
+      const data = {
+        ...defaultContent,
+        ...payload,
+        homeImages: Array.isArray(payload?.homeImages) ? payload.homeImages : []
+      };
 
-    if (!existing) {
-      const created = await createRow(TABLE, data);
-      return normalize(created);
+      if (!existing) {
+        const created = await createRow(TABLE, data);
+        return normalize(created);
+      }
+
+      const updated = await updateRow(TABLE, existing.id, data);
+      return normalize(updated);
+    } catch (error) {
+      if (isMissingTableError(error)) {
+        const created = await createRow(TABLE, {
+          ...defaultContent,
+          ...payload,
+          homeImages: Array.isArray(payload?.homeImages) ? payload.homeImages : []
+        });
+        return normalize(created);
+      }
+      throw error;
     }
-
-    const updated = await updateRow(TABLE, existing.id, data);
-    return normalize(updated);
   }
 };
 
