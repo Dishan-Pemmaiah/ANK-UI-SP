@@ -1,56 +1,40 @@
-import { createRow, deleteRow, getRowById, listRows, updateRow } from './supabaseDb';
-import authApi from './authService';
+import { deleteRow, getRowById, listRows, updateRow } from './supabaseDb';
+import { supabase } from './supabaseClient';
 
 const TABLE = 'AppUsers';
 
-const toMemberPayload = (payload) => ({
-  fullName: payload.fullName,
-  email: payload.email,
-  passwordHash: '',
-  role: payload.role,
-  membershipStatus: payload.membershipStatus,
-  membershipExpires: payload.membershipExpires
-});
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
-const withMeta = (record, meta = {}) => {
-  if (!record || typeof record !== 'object') {
-    return record;
+const saveMemberWithAuth = async (action, payload, memberId) => {
+  const response = await supabase.functions.invoke('admin-manage-member', {
+    body: {
+      action,
+      memberId,
+      fullName: String(payload.fullName || '').trim(),
+      email: normalizeEmail(payload.email),
+      password: payload.password || '',
+      role: payload.role,
+      membershipStatus: payload.membershipStatus,
+      membershipExpires: payload.membershipExpires
+    }
+  });
+
+  if (response.error) {
+    throw new Error(response.error.message || 'Unable to save the member login account.');
   }
 
-  return {
-    ...record,
-    __meta: meta
-  };
+  if (!response.data?.member) {
+    throw new Error(response.data?.error || 'The member was not saved.');
+  }
+
+  return response.data.member;
 };
 
 const memberApi = {
   getAll: () => listRows(TABLE, { orderBy: 'Id', ascending: false }),
   getById: (id) => getRowById(TABLE, id),
-  create: async (payload) => {
-    const authResult = await authApi.ensureAuthUser({
-      email: payload.email,
-      password: payload.password,
-      fullName: payload.fullName
-    });
-
-    const saved = await createRow(TABLE, toMemberPayload(payload));
-    return withMeta(saved, { warning: authResult.warning || '' });
-  },
-  update: async (id, payload) => {
-    let warning = '';
-
-    if (payload.password) {
-      const authResult = await authApi.ensureAuthUser({
-        email: payload.email,
-        password: payload.password,
-        fullName: payload.fullName
-      });
-      warning = authResult.warning || '';
-    }
-
-    const saved = await updateRow(TABLE, id, toMemberPayload(payload));
-    return withMeta(saved, { warning });
-  },
+  create: (payload) => saveMemberWithAuth('create', payload),
+  update: (id, payload) => saveMemberWithAuth('update', payload, id),
   approveAdmin: async (id) => {
     return updateRow(TABLE, id, {
       role: 'Admin',

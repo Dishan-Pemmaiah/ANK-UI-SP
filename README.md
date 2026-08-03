@@ -36,6 +36,13 @@ npm run build
 1. Open Supabase SQL Editor.
 2. Run `supabase/rls.sql`.
 3. Confirm RLS is enabled and policies are created.
+4. Deploy the admin member function so administrator-created members also receive a Supabase Auth login (without changing the admin's session):
+
+```bash
+supabase functions deploy admin-manage-member
+```
+
+The function uses the platform-provided `SUPABASE_SERVICE_ROLE_KEY`; never put this key in the React environment variables.
 
 ## Netlify deploy settings
 

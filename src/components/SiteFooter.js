@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { Box, Divider, Grid, Link, Stack, Typography } from '@mui/material';
 import contactSettingsApi from '../services/contactSettingsService';
 
@@ -41,9 +42,13 @@ export default function SiteFooter() {
 
         <Grid item xs={12} sm={6} md={3}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Explore</Typography>
-          <Typography sx={{ opacity: 0.82, fontSize: '0.92rem', lineHeight: 1.45 }}>
-            Home, Villages, Events, Sports, Gallery, and Contact.
-          </Typography>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            {data.quickLinks.map((item) => (
+              <Link key={item.path} component={RouterLink} to={item.path} color="inherit" underline="hover" sx={{ opacity: 0.82, fontSize: '0.92rem' }}>
+                {item.label}
+              </Link>
+            ))}
+          </Stack>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>

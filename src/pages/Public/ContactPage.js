@@ -1,9 +1,20 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Box, Typography, TextField, Button, Grid, Paper, Card, CardContent, Stack } from '@mui/material';
+import contactSettingsApi from '../../services/contactSettingsService';
 
 const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
 
 export default function ContactPage() {
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    contactSettingsApi.get().then(setSettings).catch(() => setSettings(null));
+  }, []);
+
+  const data = settings || { email: 'anjigerinaad@gmail.com', phoneNumber: '', address: '', instagramUrl };
+  const resolvedInstagramUrl = data.instagramUrl || instagramUrl;
+
   return (
     <Box>
       <Typography variant="overline" sx={{ letterSpacing: 3, color: '#d9b18f' }}>
@@ -25,7 +36,7 @@ export default function ContactPage() {
               <Typography sx={{ color: 'rgba(255,255,255,0.75)', mt: 1 }}>
                 Follow the club for match photos, event coverage, heritage posts, and live updates.
               </Typography>
-              <Button component="a" href={instagramUrl} target="_blank" rel="noreferrer" variant="contained" sx={{ mt: 2 }}>
+              <Button component="a" href={resolvedInstagramUrl} target="_blank" rel="noreferrer" variant="contained" sx={{ mt: 2 }}>
                 Open Instagram
               </Button>
             </CardContent>
@@ -47,10 +58,10 @@ export default function ContactPage() {
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', background: '#141414' }}>
             <CardContent>
-              <Typography variant="overline" sx={{ letterSpacing: 2, color: '#d9b18f' }}>Best for</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800, mt: 1 }}>Club enquiries</Typography>
+              <Typography variant="overline" sx={{ letterSpacing: 2, color: '#d9b18f' }}>Contact details</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, mt: 1 }}>{data.email}</Typography>
               <Typography sx={{ color: 'rgba(255,255,255,0.75)', mt: 1 }}>
-                Ask about memberships, events, heritage content, committee updates, or general club information.
+                 {[data.phoneNumber, data.address].filter(Boolean).join(' | ') || 'Ask about memberships, events, heritage content, committee updates, or general club information.'}
               </Typography>
             </CardContent>
           </Card>

@@ -36,12 +36,15 @@ alter table if exists public."Fixtures" enable row level security;
 alter table if exists public."GalleryItems" enable row level security;
 alter table if exists public."HallOfFameItems" enable row level security;
 alter table if exists public."HeritageItems" enable row level security;
+alter table if exists public."HomePageContents" enable row level security;
 alter table if exists public."LiveUpdates" enable row level security;
 alter table if exists public."NewsItems" enable row level security;
 alter table if exists public."Players" enable row level security;
 alter table if exists public."PointTableEntries" enable row level security;
 alter table if exists public."SportCategories" enable row level security;
 alter table if exists public."SportTournamentRecords" enable row level security;
+alter table if exists public."SportsTournaments" enable row level security;
+alter table if exists public."ContactSettings" enable row level security;
 alter table if exists public."Teams" enable row level security;
 alter table if exists public."Villages" enable row level security;
 
@@ -70,6 +73,8 @@ drop policy if exists "public read HallOfFameItems" on public."HallOfFameItems";
 drop policy if exists "admin write HallOfFameItems" on public."HallOfFameItems";
 drop policy if exists "public read HeritageItems" on public."HeritageItems";
 drop policy if exists "admin write HeritageItems" on public."HeritageItems";
+drop policy if exists "public read HomePageContents" on public."HomePageContents";
+drop policy if exists "admin write HomePageContents" on public."HomePageContents";
 drop policy if exists "public read LiveUpdates" on public."LiveUpdates";
 drop policy if exists "admin write LiveUpdates" on public."LiveUpdates";
 drop policy if exists "public read NewsItems" on public."NewsItems";
@@ -82,6 +87,10 @@ drop policy if exists "public read SportCategories" on public."SportCategories";
 drop policy if exists "admin write SportCategories" on public."SportCategories";
 drop policy if exists "public read SportTournamentRecords" on public."SportTournamentRecords";
 drop policy if exists "admin write SportTournamentRecords" on public."SportTournamentRecords";
+drop policy if exists "public read SportsTournaments" on public."SportsTournaments";
+drop policy if exists "admin write SportsTournaments" on public."SportsTournaments";
+drop policy if exists "public read ContactSettings" on public."ContactSettings";
+drop policy if exists "admin write ContactSettings" on public."ContactSettings";
 drop policy if exists "public read Teams" on public."Teams";
 drop policy if exists "admin write Teams" on public."Teams";
 drop policy if exists "public read Villages" on public."Villages";
@@ -135,6 +144,9 @@ create policy "admin write HallOfFameItems" on public."HallOfFameItems" for all 
 create policy "public read HeritageItems" on public."HeritageItems" for select using (true);
 create policy "admin write HeritageItems" on public."HeritageItems" for all using (public.is_admin()) with check (public.is_admin());
 
+create policy "public read HomePageContents" on public."HomePageContents" for select using (true);
+create policy "admin write HomePageContents" on public."HomePageContents" for all using (public.is_admin()) with check (public.is_admin());
+
 create policy "public read LiveUpdates" on public."LiveUpdates" for select using (true);
 create policy "admin write LiveUpdates" on public."LiveUpdates" for all using (public.is_admin()) with check (public.is_admin());
 
@@ -152,6 +164,12 @@ create policy "admin write SportCategories" on public."SportCategories" for all 
 
 create policy "public read SportTournamentRecords" on public."SportTournamentRecords" for select using (true);
 create policy "admin write SportTournamentRecords" on public."SportTournamentRecords" for all using (public.is_admin()) with check (public.is_admin());
+
+create policy "public read SportsTournaments" on public."SportsTournaments" for select using (true);
+create policy "admin write SportsTournaments" on public."SportsTournaments" for all using (public.is_admin()) with check (public.is_admin());
+
+create policy "public read ContactSettings" on public."ContactSettings" for select using (true);
+create policy "admin write ContactSettings" on public."ContactSettings" for all using (public.is_admin()) with check (public.is_admin());
 
 create policy "public read Teams" on public."Teams" for select using (true);
 create policy "admin write Teams" on public."Teams" for all using (public.is_admin()) with check (public.is_admin());

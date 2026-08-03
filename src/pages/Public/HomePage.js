@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import newsApi from '../../services/newsService';
 import eventApi from '../../services/eventService';
 import achievementApi from '../../services/achievementService';
+import homeContentApi from '../../services/homeContentService';
 
 const logoSrc = '/ank-logo.jpeg';
 const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
@@ -13,6 +14,19 @@ export default function HomePage() {
   const [highlights, setHighlights] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
+  const [homeContent, setHomeContent] = useState({
+    heroTitle: 'Anjigeri Naad Koota',
+    heroSubtitle: 'Community. Sport. Heritage.',
+    welcomeSection: 'What ANK stands for',
+    aboutSection: 'A bold home for Kodava heritage, competitive sport, village unity, live updates, and club history.',
+    featuredContent: 'Current news, events, and live sports broadcast from the database.',
+    homeImages: [],
+    announcements: ''
+  });
+
+  useEffect(() => {
+    homeContentApi.get().then(setHomeContent).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -135,15 +149,15 @@ export default function HomePage() {
                   }}
                 />
                 <Typography variant="overline" sx={{ display: 'block', color: '#e0b08f', letterSpacing: 4, fontWeight: 800 }}>
-                  Community. Sport. Heritage.
+                  {homeContent.heroSubtitle}
                 </Typography>
               </Box>
             </Stack>
             <Typography component="h1" sx={{ fontSize: { xs: '2.8rem', md: '4.8rem' }, lineHeight: 0.95, fontWeight: 900, letterSpacing: '-0.04em', textTransform: 'uppercase', maxWidth: 900 }}>
-              Anjigeri Naad Koota
+              {homeContent.heroTitle}
             </Typography>
             <Typography sx={{ mt: 2.5, fontSize: { xs: '1rem', md: '1.18rem' }, maxWidth: 720, color: 'rgba(255,255,255,0.82)', lineHeight: 1.8 }}>
-              A bold home for Kodava heritage, competitive sport, village unity, live updates, and club history - built from the database, not static copy.
+              {homeContent.aboutSection}
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
@@ -159,13 +173,13 @@ export default function HomePage() {
           <Grid item xs={12} md={5}>
             <Paper sx={{ p: 3, borderRadius: 3, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
               <Typography variant="overline" sx={{ letterSpacing: 2, color: '#d6d6d6' }}>
-                What ANK stands for
+                {homeContent.welcomeSection}
               </Typography>
               <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.12)' }} />
               <Stack spacing={2.2}>
                 <Box>
                   <Typography sx={{ fontWeight: 800, fontSize: '1.1rem' }}>Live club updates</Typography>
-                  <Typography sx={{ color: 'rgba(255,255,255,0.78)' }}>Current news, events, and live sports broadcast from the database.</Typography>
+                  <Typography sx={{ color: 'rgba(255,255,255,0.78)' }}>{homeContent.featuredContent}</Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ fontWeight: 800, fontSize: '1.1rem' }}>Played and hosted records</Typography>
@@ -176,10 +190,26 @@ export default function HomePage() {
                   <Typography sx={{ color: 'rgba(255,255,255,0.78)' }}>Structured content for the people, culture, and leadership of ANK.</Typography>
                 </Box>
               </Stack>
+              {homeContent.homeImages.length ? (
+                <Grid container spacing={1} sx={{ mt: 2 }}>
+                  {homeContent.homeImages.slice(0, 3).map((image, index) => (
+                    <Grid item xs={4} key={`${image}-${index}`}>
+                      <Box component="img" src={image} alt={`${homeContent.heroTitle} ${index + 1}`} sx={{ width: '100%', height: 72, objectFit: 'cover', borderRadius: 1 }} />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : null}
             </Paper>
           </Grid>
         </Grid>
       </Paper>
+
+      {homeContent.announcements.trim() ? (
+        <Paper sx={{ p: { xs: 2.5, md: 3 }, mb: 4, background: '#141414' }}>
+          <Typography variant="overline" sx={{ letterSpacing: 2, color: '#e0b08f' }}>Announcements</Typography>
+          <Typography sx={{ whiteSpace: 'pre-line', mt: 1, color: 'rgba(255,255,255,0.8)' }}>{homeContent.announcements}</Typography>
+        </Paper>
+      ) : null}
 
       <Paper
         sx={{

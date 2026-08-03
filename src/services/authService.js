@@ -82,34 +82,6 @@ const authApi = {
     }
     return response.data.session || null;
   },
-  ensureAuthUser: async ({ email, password, fullName }) => {
-    ensureSupabaseConfigured();
-
-    const normalizedEmail = normalizeEmail(email);
-    if (!normalizedEmail || !password) {
-      return { created: false, warning: 'Email and password are required to create a login account.' };
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password,
-      options: {
-        data: {
-          fullName: fullName || ''
-        }
-      }
-    });
-
-    if (error) {
-      const mapped = mapAuthError(error.message);
-      if (mapped.toLowerCase().includes('already registered')) {
-        return { created: false, warning: mapped };
-      }
-      throw new Error(mapped);
-    }
-
-    return { created: Boolean(data?.user?.id), warning: '' };
-  },
   register: async (payload) => {
     ensureSupabaseConfigured();
 
