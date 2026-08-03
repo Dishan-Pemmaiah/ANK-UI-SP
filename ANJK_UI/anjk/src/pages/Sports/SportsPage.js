@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, Grid, Card, CardContent, Chip } from '@mui/material';
+import { useContext, useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import { Box, Typography, Grid, Card, CardContent, Chip, Button } from '@mui/material';
 import sportsApi from '../../services/sportsService';
+import AuthContext from '../../context/AuthContext';
 
 export default function SportsPage() {
+  const auth = useContext(AuthContext);
   const [sports, setSports] = useState([]);
   const [tournaments, setTournaments] = useState([]);
 
@@ -35,6 +38,11 @@ export default function SportsPage() {
       <Typography paragraph>
         This page separates what ANJ played and what ANJ hosted, with live and history maintained for each section.
       </Typography>
+      {String(auth?.user?.role || '').toLowerCase() === 'admin' ? (
+        <Button component={RouterLink} to="/admin/sports" variant="contained" sx={{ mb: 2 }}>
+          Manage Sports (Admin)
+        </Button>
+      ) : null}
 
       <Typography variant="h5" gutterBottom>Sport Categories</Typography>
       <Grid container spacing={3}>
