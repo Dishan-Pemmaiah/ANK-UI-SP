@@ -22,6 +22,12 @@ export default function SportsPage() {
   const playedHistory = tournaments.filter((item) => item.activityType === 'Played' && item.recordState === 'History');
   const hostedLive = tournaments.filter((item) => item.activityType === 'Hosted' && item.recordState === 'Live');
   const hostedHistory = tournaments.filter((item) => item.activityType === 'Hosted' && item.recordState === 'History');
+  const sections = [
+    { title: 'Played - Live', items: playedLive, liveColor: 'error' },
+    { title: 'Played - History', items: playedHistory },
+    { title: 'Hosted - Live', items: hostedLive, liveColor: 'success' },
+    { title: 'Hosted - History', items: hostedHistory }
+  ].filter((section) => section.items.length > 0);
 
   return (
     <Box>
@@ -44,77 +50,32 @@ export default function SportsPage() {
         ))}
       </Grid>
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>Played - Live</Typography>
-        <Grid container spacing={3}>
-          {playedLive.map((item) => (
-            <Grid item xs={12} md={6} key={item.id}>
-              <Card>
-                <CardContent>
-                  <Chip label="Live" color="error" sx={{ mb: 1 }} />
-                  <Typography variant="h6">{item.title}</Typography>
-                  <Typography>{item.sportName}</Typography>
-                  <Typography>{item.description}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      {sections.map((section) => (
+        <Box sx={{ mt: 4 }} key={section.title}>
+          <Typography variant="h5" gutterBottom>{section.title}</Typography>
+          <Grid container spacing={3}>
+            {section.items.map((item) => (
+              <Grid item xs={12} md={6} key={item.id}>
+                <Card>
+                  <CardContent>
+                    {section.liveColor ? <Chip label="Live" color={section.liveColor} sx={{ mb: 1 }} /> : null}
+                    <Typography variant="h6">{item.title}</Typography>
+                    <Typography>{item.sportName}{item.eventDate ? ` • ${new Date(item.eventDate).toLocaleDateString()}` : ''}</Typography>
+                    {item.result ? <Typography>{item.result}</Typography> : null}
+                    <Typography>{item.description}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      ))}
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>Played - History</Typography>
-        <Grid container spacing={3}>
-          {playedHistory.map((item) => (
-            <Grid item xs={12} md={6} key={item.id}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6">{item.title}</Typography>
-                  <Typography>{item.sportName} • {new Date(item.eventDate).toLocaleDateString()}</Typography>
-                  <Typography>{item.result}</Typography>
-                  <Typography>{item.description}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>Hosted - Live</Typography>
-        <Grid container spacing={3}>
-          {hostedLive.map((item) => (
-            <Grid item xs={12} md={6} key={item.id}>
-              <Card>
-                <CardContent>
-                  <Chip label="Live" color="success" sx={{ mb: 1 }} />
-                  <Typography variant="h6">{item.title}</Typography>
-                  <Typography>{item.sportName}</Typography>
-                  <Typography>{item.description}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>Hosted - History</Typography>
-        <Grid container spacing={3}>
-          {hostedHistory.map((item) => (
-            <Grid item xs={12} md={6} key={item.id}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6">{item.title}</Typography>
-                  <Typography>{item.sportName} • {new Date(item.eventDate).toLocaleDateString()}</Typography>
-                  <Typography>{item.result}</Typography>
-                  <Typography>{item.description}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      {sections.length === 0 ? (
+        <Box sx={{ mt: 4 }}>
+          <Typography>No sports records available yet.</Typography>
+        </Box>
+      ) : null}
     </Box>
   );
 }

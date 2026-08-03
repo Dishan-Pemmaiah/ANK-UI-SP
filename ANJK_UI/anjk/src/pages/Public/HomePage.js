@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import newsApi from '../../services/newsService';
 import eventApi from '../../services/eventService';
 import achievementApi from '../../services/achievementService';
+import liveApi from '../../services/liveService';
 
 const logoSrc = '/ank-logo.jpeg';
 const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
@@ -22,7 +23,7 @@ export default function HomePage() {
     const syncHighlights = () => {
       if (!mounted) return;
 
-      const orderedHighlights = ['news', 'events', 'achievements']
+      const orderedHighlights = ['live', 'news', 'events', 'achievements']
         .map((key) => highlightEntries.get(key))
         .filter(Boolean);
 
@@ -54,7 +55,13 @@ export default function HomePage() {
       }
     };
 
-    let pendingLoads = 3;
+    let pendingLoads = 4;
+
+    loadSection('live', () => liveApi.getCurrent().then((item) => (item ? [item] : [])), (item) => ({
+      title: 'Live Update',
+      description: item.message || 'Latest live information from ANK.',
+      action: { label: 'Open live page', path: '/live' }
+    }));
 
     loadSection('news', () => newsApi.getAll(), (item) => ({
       title: item.title,

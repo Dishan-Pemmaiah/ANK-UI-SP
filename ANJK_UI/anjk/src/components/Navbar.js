@@ -21,8 +21,8 @@ export default function Navbar({ onDrawerToggle }) {
     Promise.all([
       newsApi.getAll().catch(() => []),
       eventApi.getAll().catch(() => []),
-      liveApi.getHistory().catch(() => [])
-    ]).then(([news, events, liveHistory]) => {
+      liveApi.getCurrent().catch(() => null)
+    ]).then(([news, events, liveCurrent]) => {
       if (!mounted) {
         return;
       }
@@ -30,7 +30,7 @@ export default function Navbar({ onDrawerToggle }) {
       const nextAnnouncements = [
         news[0] ? { text: `News: ${news[0].title}`, path: '/news' } : null,
         events[0] ? { text: `Event: ${events[0].name}`, path: '/events' } : null,
-        liveHistory[0] ? { text: `Live: ${liveHistory[0].message}`, path: '/live' } : null
+        liveCurrent?.message ? { text: `Live: ${liveCurrent.message}`, path: '/live' } : null
       ].filter(Boolean);
 
       setAnnouncements(nextAnnouncements);
@@ -129,7 +129,7 @@ export default function Navbar({ onDrawerToggle }) {
               <Typography sx={{ color: '#ffffff', fontWeight: 600 }}>
                 {auth.user?.fullName || 'Member'}
               </Typography>
-              {auth.user?.role === 'Admin' && (
+              {String(auth.user?.role || '').toLowerCase() === 'admin' && (
                 <Button color="inherit" component={NavLink} to="/admin">
                   Admin
                 </Button>
