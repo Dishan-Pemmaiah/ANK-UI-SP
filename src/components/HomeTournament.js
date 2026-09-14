@@ -5,15 +5,20 @@ import HockeyMatchCard from './HockeyMatchCard';
 import { getSeasonData } from '../services/hockeyService';
 import { getTournamentState } from '../services/tournamentState';
 import { formatSeasonDates } from '../services/hockeyDates';
+import { hockeyRefreshDelay } from '../services/hockeyRefresh';
 
 export default function HomeTournament() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   useEffect(() => {
-    let active = true;
-    const load = () => getSeasonData().then((value) => { if (active) setData(value); }).catch(() => {});
-    load(); const timer = setInterval(load, 12000);
-    return () => { active = false; clearInterval(timer); };
+    let active = true; let timer;
+    const load = async () => {
+      let next;
+      try { next = await getSeasonData(); if (active) setData(next); } catch (_) { /* Retry on the next interval. */ }
+      if (active) timer = setTimeout(load, hockeyRefreshDelay(next?.matches));
+    };
+    load();
+    return () => { active = false; clearTimeout(timer); };
   }, []);
   const season = data?.season;
   if (!season || (!data.matches.length && !season.poster_url && !season.starts_at)) return null;

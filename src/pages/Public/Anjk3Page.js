@@ -2,28 +2,19 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Alert, Box, Button, Chip, Grid, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import HockeyMatchCard from '../../components/HockeyMatchCard';
+import { HockeyStandings, HockeyTeams } from './HockeyDirectory';
 import { getSeasonData } from '../../services/hockeyService';
 import { getTournamentState, tournamentDayKey } from '../../services/tournamentState';
 import { getHockeyStats } from '../../services/hockeyStats';
 import { formatSeasonDates } from '../../services/hockeyDates';
+import { hockeyRefreshDelay } from '../../services/hockeyRefresh';
 import AuthContext from '../../context/AuthContext';
 
 const tabs = ['Overview', 'Fixtures', 'Live', 'Results', 'Points Table', 'Teams', 'Knockouts', 'Stats'];
 const slug = (tab) => tab.toLowerCase().replace(' ', '-');
 const MatchList = ({ matches, basePath, emptyMessage = 'No matches to show yet.' }) => matches.length ? <Stack spacing={1.5}>{matches.map((match) => <Box id={`match-${match.id}`} key={match.id}><HockeyMatchCard match={match} basePath={basePath} /></Box>)}</Stack> : <Typography sx={{ color: '#aaa' }}>{emptyMessage}</Typography>;
-
-function Standings({ rows }) {
-  if (!rows.length) return <Typography sx={{ color: '#aaa' }}>Teams will appear here when added.</Typography>;
-  const pools = [...new Set(rows.map((row) => row.pool || 'League'))];
-  return <>{pools.map((pool) => <Box key={pool} sx={{ mb: 3 }}>
-    <Typography variant="h6" sx={{ mb: 1 }}> {pool === 'League' ? pool : `Pool ${pool}`}</Typography>
-    <Box sx={{ overflowX: 'auto' }}><Box component="table" sx={{ width: '100%', minWidth: 510, borderCollapse: 'collapse', '& th, & td': { p: 1, textAlign: 'center', borderBottom: '1px solid #333' }, '& th:first-of-type, & td:first-of-type': { textAlign: 'left' } }}>
-      <thead><tr>{['Team','P','W','D','L','GF','GA','GD','Pts'].map((label) => <th key={label}>{label}</th>)}</tr></thead>
-      <tbody>{rows.filter((row) => (row.pool || 'League') === pool).sort((a,b) => b.points-a.points || b.goal_difference-a.goal_difference || b.goals_for-a.goals_for).map((row) => <tr key={row.team_id}><td>{row.team_name}</td>{[row.played,row.won,row.drawn,row.lost,row.goals_for,row.goals_against,row.goal_difference,row.points].map((value,index) => <td key={index}>{value}</td>)}</tr>)}</tbody>
-    </Box></Box>
-  </Box>)}</>;
-}
 
 export default function Anjk3Page() {
   const auth = useContext(AuthContext);
@@ -38,8 +29,18 @@ export default function Anjk3Page() {
   const [pool, setPool] = useState('');
   const [stage, setStage] = useState('');
   const tab = tabs.find((item) => slug(item) === params.get('tab')) || 'Overview';
-  const load = useCallback(() => getSeasonData(seasonSlug).then(setData).catch((err) => setError(err.message)), [seasonSlug]);
-  useEffect(() => { load(); const timer = setInterval(load, 12000); return () => clearInterval(timer); }, [load]);
+  const [refreshing, setRefreshing] = useState(false);
+  const load = useCallback(async () => { try { const next = await getSeasonData(seasonSlug); setData(next); setError(''); return next; } catch (err) { setError(err.message); return null; } }, [seasonSlug]);
+  useEffect(() => {
+    let active = true; let timer;
+    const tick = async () => {
+      const next = await load();
+      if (!active) return;
+      timer = setTimeout(tick, hockeyRefreshDelay(next?.matches));
+    };
+    tick();
+    return () => { active = false; clearTimeout(timer); };
+  }, [load]);
   const state = useMemo(() => getTournamentState(data?.matches), [data]);
   const stats = useMemo(() => getHockeyStats(data?.matches, data?.events, data?.teams, data?.players), [data]);
   const filtered = useMemo(() => (data?.matches || []).filter((match) => (!date || tournamentDayKey(new Date(match.scheduled_at)) === date) && (!pool || match.pool === pool) && (!stage || match.stage === stage)), [data, date, pool, stage]);
@@ -74,7 +75,7 @@ export default function Anjk3Page() {
       </Grid>
     </Paper>
     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-    <Tabs value={tab} onChange={(_, value) => setParams({ tab: slug(value) })} variant="scrollable" scrollButtons="auto" sx={{ mb: 3, borderBottom: '1px solid #333' }}>{tabs.map((item) => <Tab key={item} value={item} label={item} />)}</Tabs>
+    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 2, borderBottom: '1px solid #333', minWidth: 0 }}><Tabs value={tab} onChange={(_, value) => setParams({ tab: slug(value) })} variant="scrollable" scrollButtons="auto" sx={{ minWidth: 0, flex: 1 }}>{tabs.map((item) => <Tab key={item} value={item} label={item} />)}</Tabs><Button size="small" startIcon={<RefreshIcon />} disabled={refreshing} onClick={async () => { setRefreshing(true); await load(); setRefreshing(false); }} aria-label="Refresh tournament" sx={{ flexShrink: 0 }}>{refreshing ? 'Updating' : 'Refresh'}</Button></Stack>
     {tab === 'Overview' && <Stack spacing={3}>
       {state.live && <Box><Button component={Link} to={`${basePath}?tab=live#match-${state.live.id}`} sx={{ mb: 1, color: '#ff5555', fontWeight: 900, fontSize: '1.4rem', px: 0 }}>● LIVE NOW</Button><HockeyMatchCard match={state.live} basePath={basePath} />{auth?.isAdmin && <Button component={Link} to={`${controlPath}?tab=match-control&match=${state.live.id}`} sx={{ mt: 1 }}>Control live match in CMS</Button>}</Box>}
       {!state.live && state.next && <Box><Typography variant="h5" sx={{ mb: 1 }}>Next Match</Typography><HockeyMatchCard match={state.next} basePath={basePath} /></Box>}
@@ -94,8 +95,8 @@ export default function Anjk3Page() {
       <MatchList matches={filteredByStatus(tab === 'Fixtures' ? ['Upcoming','Live','Postponed','Cancelled'] : ['Completed'])} basePath={basePath} emptyMessage={date || pool || stage ? 'No matches match these filters.' : 'No matches to show yet.'} />
     </Stack>}
     {tab === 'Live' && <Stack spacing={2}><MatchList matches={filteredByStatus(['Live'])} basePath={basePath} />{auth?.isAdmin && filteredByStatus(['Live']).map((match) => <Button key={match.id} component={Link} to={`${controlPath}?tab=match-control&match=${match.id}`} variant="outlined">Control {match.home?.name} vs {match.away?.name} in CMS</Button>)}{liveEvents.slice(0,12).map((event) => <Paper key={event.id} sx={{ p: 1.5 }}><Typography fontWeight={800}>{event.event_type} {data.teams.find((team) => team.id === event.team_id)?.name || ''}{event.player_id ? ` · ${data.players.find((player) => player.id === event.player_id)?.name || ''}` : ''}{event.event_type === 'Phase Changed' ? ` · ${event.note}` : ''}</Typography><Typography variant="caption" color="text.secondary">{new Date(event.created_at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</Typography></Paper>)}</Stack>}
-    {tab === 'Points Table' && <Standings rows={data?.standings || []} />}
-    {tab === 'Teams' && <Grid container spacing={2}>{data?.teams.map((team) => <Grid item xs={12} sm={6} md={4} key={team.id}><Paper sx={{ p: 2, height: '100%' }}><Typography variant="h6" fontWeight={800}>{team.name}</Typography><Typography color="text.secondary">{team.pool ? `Pool ${team.pool}` : 'League'}</Typography>{data.players.filter((player) => player.team_id === team.id).length > 0 && <Box sx={{ mt: 2 }}><Typography variant="subtitle2" sx={{ mb: 1, color: '#dcb99b' }}>Players</Typography><Stack spacing={0.75}>{data.players.filter((player) => player.team_id === team.id).map((player) => <Stack key={player.id} direction="row" spacing={1} alignItems="center"><Chip size="small" label={player.shirt_number ?? '—'} sx={{ minWidth: 34 }} /><Typography>{player.name}</Typography></Stack>)}</Stack></Box>}</Paper></Grid>)}</Grid>}
+    {tab === 'Points Table' && <HockeyStandings rows={data?.standings || []} />}
+    {tab === 'Teams' && <HockeyTeams teams={data?.teams || []} players={data?.players || []} />}
     {tab === 'Knockouts' && <Box><Typography variant="h5" sx={{ mb: 2 }}>Knockout Bracket</Typography><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, minmax(0, 1fr))' }, gap: 2, alignItems: 'stretch' }}>{['Quarter Final','Semi Final','Final','Champion'].map((round, index) => <Box key={round} sx={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0, '&::after': index < 3 ? { content: '"→"', position: 'absolute', right: -17, top: '50%', color: '#dcb99b', fontSize: 24, zIndex: 1, display: { xs: 'none', md: 'block' } } : {} }}><Typography variant="h6" sx={{ mb: 1, color: '#dcb99b' }}>{round}</Typography>{round === 'Champion' ? <Paper sx={{ p: 2, border: '1px solid #9d7144', textAlign: 'center' }}><Typography variant="h4">🏆</Typography><Typography fontWeight={900}>{champion?.name || 'To be confirmed'}</Typography></Paper> : <Stack spacing={1.5}>{(data?.matches || []).filter((match) => match.stage === round).length ? (data?.matches || []).filter((match) => match.stage === round).map((match) => <HockeyMatchCard key={match.id} match={match} compact basePath={basePath} />) : <Paper sx={{ p: 2, color: '#aaa' }}>To be decided</Paper>}</Stack>}{index < 3 && <Typography sx={{ display: { xs: 'block', md: 'none' }, textAlign: 'center', color: '#dcb99b', fontSize: 24 }}>↓</Typography>}</Box>)}</Box></Box>}
     {tab === 'Stats' && <Stack spacing={2}><Typography variant="h5">Tournament Stats</Typography>{stats.matchesPlayed > 0 && <Grid container spacing={2}><Grid item xs={6} sm={4}><Paper sx={{ p: 2 }}><Typography color="text.secondary">Matches Played</Typography><Typography variant="h4" fontWeight={900}>{stats.matchesPlayed}</Typography></Paper></Grid><Grid item xs={6} sm={4}><Paper sx={{ p: 2 }}><Typography color="text.secondary">Total Goals</Typography><Typography variant="h4" fontWeight={900}>{stats.totalGoals}</Typography></Paper></Grid></Grid>}{stats.topScorers.length > 0 && <Paper sx={{ p: 2 }}><Typography variant="h6">Top Scorers</Typography>{stats.topScorers.slice(0, 10).map(({ player, goals }) => <Stack key={player.id} direction="row" justifyContent="space-between" sx={{ py: 0.5 }}><Typography>{player.name} · {data.teams.find((team) => team.id === player.team_id)?.name}</Typography><Typography fontWeight={800}>{goals}</Typography></Stack>)}</Paper>}{stats.teamGoals.length > 0 && <Paper sx={{ p: 2 }}><Typography variant="h6">Team Goals</Typography>{stats.teamGoals.map(({ team, goals }) => <Stack key={team.id} direction="row" justifyContent="space-between" sx={{ py: 0.5 }}><Typography>{team.name}</Typography><Typography fontWeight={800}>{goals}</Typography></Stack>)}</Paper>}{stats.mostWins.length > 0 && <Paper sx={{ p: 2 }}><Typography variant="h6">Most Wins</Typography>{stats.mostWins.map(({ team, wins }) => <Stack key={team.id} direction="row" justifyContent="space-between" sx={{ py: 0.5 }}><Typography>{team.name}</Typography><Typography fontWeight={800}>{wins}</Typography></Stack>)}</Paper>}{stats.matchesPlayed === 0 && <Typography sx={{ color: '#aaa' }}>Stats will appear after the first completed match.</Typography>}</Stack>}
   </Box>;

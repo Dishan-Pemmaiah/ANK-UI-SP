@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AdminAnjk3 from './AdminAnjk3';
-import { deleteMatch, getSeasonData, saveMatch, saveSeason } from '../../services/hockeyService';
+import { deleteMatch, getSeasonData, saveMatch, savePlayer, saveSeason } from '../../services/hockeyService';
 
 jest.mock('../../services/hockeyService', () => ({
   getSeasonData: jest.fn(), saveSeason: jest.fn(), saveTeam: jest.fn(), deleteTeam: jest.fn(),
@@ -74,4 +74,20 @@ test('completed match deletion requires confirmation and removes only that match
   await waitFor(() => expect(deleteMatch).toHaveBeenCalledWith('match-1'));
   expect(await screen.findByText('Match deleted. Its goals and result were removed from the tournament.')).toBeInTheDocument();
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+});
+
+test('Match Control publishes a note and adds a player to the selected match team', async () => {
+  getSeasonData.mockResolvedValue({ ...data, matches: [fixture], teams: [fixture.home, fixture.away] });
+  saveMatch.mockResolvedValue({ ...fixture, match_note: 'Rain delay' });
+  savePlayer.mockResolvedValue({ id: 'new-player', name: 'New scorer', team_id: 'a' });
+  render(<MemoryRouter initialEntries={['/admin/anjk-3?tab=match-control&match=match-1']}><Routes><Route path="/admin/anjk-3" element={<AdminAnjk3 />} /></Routes></MemoryRouter>);
+  fireEvent.change(await screen.findByLabelText('Public match note'), { target: { value: 'Rain delay' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save match update' }));
+  await waitFor(() => expect(saveMatch).toHaveBeenCalledWith({ match_note: 'Rain delay' }, 'match-1'));
+  expect(await screen.findByText('Match update saved and published.')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Player name'), { target: { value: 'New scorer' } });
+  fireEvent.change(screen.getByLabelText('Jersey (optional)'), { target: { value: '11' } });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Add player to team' })).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Add player to team' }));
+  await waitFor(() => expect(savePlayer).toHaveBeenCalledWith({ season_id: 'season-1', team_id: 'a', name: 'New scorer', shirt_number: 11 }));
 });

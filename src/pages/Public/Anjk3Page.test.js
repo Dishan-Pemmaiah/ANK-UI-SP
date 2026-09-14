@@ -50,4 +50,16 @@ test('shows saved season dates and only active live goals, with an admin control
   expect(screen.getAllByText('Goal Alpha')).toHaveLength(1);
   expect(screen.queryByText(/Goal Removed|reversed/)).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Control Alpha vs Bravo in CMS' })).toHaveAttribute('href', '/admin/anjk-3?tab=match-control&match=match-1');
+  expect(screen.getByRole('button', { name: 'Refresh tournament' })).toBeInTheDocument();
+});
+
+test('a match update is shown on a completed fixture and manual Refresh requests fresh data', async () => {
+  getSeasonData.mockResolvedValue({
+    season: { id: 'season-1', name: 'ANJK 3' }, teams: [match.home, match.away],
+    matches: [{ ...match, match_note: 'Won in sudden death' }], standings: [], announcements: [], players: [], events: []
+  });
+  render(<MemoryRouter initialEntries={['/anjk-3?tab=results']}><Routes><Route path="/anjk-3" element={<Anjk3Page />} /></Routes></MemoryRouter>);
+  expect(await screen.findByText('Match update: Won in sudden death')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh tournament' }));
+  expect(getSeasonData).toHaveBeenCalledTimes(2);
 });

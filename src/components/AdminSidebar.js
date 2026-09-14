@@ -9,6 +9,7 @@ const items = [
   { label: 'Heritage', path: '/admin/heritage' },
   { label: 'Events', path: '/admin/events' },
   { label: 'Sports', path: '/admin/sports' },
+  { label: 'ANK Kodava Hockey Namme 3', path: '/admin/anjk-3' },
   { label: 'Home Content', path: '/admin/home-content' },
   { label: 'Contact Settings', path: '/admin/contact-settings' },
   { label: 'Updates', path: '/admin/updates' },

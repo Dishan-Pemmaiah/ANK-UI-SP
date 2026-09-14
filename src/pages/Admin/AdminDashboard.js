@@ -9,7 +9,7 @@ export default function AdminDashboard() {
     { title: 'Manage Heritage', route: '/admin/heritage' },
     { title: 'Manage Events', route: '/admin/events' },
     { title: 'Manage Sports', route: '/admin/sports' },
-    { title: 'Manage ANJK 3', route: '/admin/anjk-3' },
+    { title: 'ANK Kodava Hockey Namme 3 CMS', route: '/admin/anjk-3' },
     { title: 'Manage Updates', route: '/admin/updates' },
     { title: 'Manage Gallery', route: '/admin/gallery' }
   ];
