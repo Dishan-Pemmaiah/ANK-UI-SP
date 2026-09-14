@@ -25,4 +25,6 @@ export const getTournamentState = (matches = [], now = new Date()) => {
   };
 };
 
-export const fixtureLabel = (match) => [match.stage, match.pool ? `Pool ${match.pool}` : null].filter(Boolean).join(' · ');
+export const fixtureLabel = (match) => match.round_name
+  ? [match.round_name, match.display_label].filter(Boolean).join(' · ')
+  : [match.stage, match.pool ? `Pool ${match.pool}` : null].filter(Boolean).join(' · ');

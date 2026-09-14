@@ -1,4 +1,4 @@
-import { controlMatch, correctGoal, correctResult, deleteMatch, deletePlayer, getSeasonData, saveMatch, savePlayer, saveSeason, saveTeam } from './hockeyService';
+import { advanceWinner, assignBye, completeKnockoutMatch, controlMatch, correctGoal, correctKnockoutResult, correctResult, deleteMatch, deletePlayer, getSeasonData, removeAdvancement, saveMatch, savePlayer, saveRound, saveSeason, saveTeam, setKnockoutWinner, setProgression } from './hockeyService';
 import { supabase } from './supabaseClient';
 
 jest.mock('./supabaseClient', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
@@ -83,6 +83,31 @@ test('players can be created, edited and deleted', async () => {
   expect(chain.delete).toHaveBeenCalledTimes(1);
 });
 
+test('knockout rounds and guarded winner, progression and bye actions use dedicated database calls', async () => {
+  const chain = query({ id: 'round-1' }); supabase.from.mockReturnValue(chain);
+  await saveRound({ season_id: 's', name: 'Preliminary', sort_order: 1 });
+  expect(supabase.from).toHaveBeenCalledWith('hockey_rounds');
+  supabase.rpc.mockResolvedValue({ data: { id: 'm' }, error: null });
+  await completeKnockoutMatch('m', 'a', 'Shootout', 4, 3);
+  await setKnockoutWinner('m', 'b', 'Walkover');
+  await correctKnockoutResult('m', 2, 2, 'a', 'Shootout', 4, 3);
+  await setProgression('m', 'next', 'home', true);
+  await setProgression('m', null, null, false);
+  await advanceWinner('m', 'next', 'away');
+  await assignBye('a', 'next', 'home', 'Bye');
+  await removeAdvancement('adv');
+  expect(supabase.rpc.mock.calls).toEqual([
+    ['hockey_complete_knockout_match', { p_match_id: 'm', p_winner_team_id: 'a', p_decision_method: 'Shootout', p_shootout_home: 4, p_shootout_away: 3 }],
+    ['hockey_set_knockout_winner', { p_match_id: 'm', p_winner_team_id: 'b', p_decision_method: 'Walkover', p_shootout_home: null, p_shootout_away: null }],
+    ['hockey_correct_knockout_result', { p_match_id: 'm', p_home_score: 2, p_away_score: 2, p_winner_team_id: 'a', p_decision_method: 'Shootout', p_shootout_home: 4, p_shootout_away: 3 }],
+    ['hockey_set_progression', { p_source_match_id: 'm', p_target_match_id: 'next', p_slot: 'home', p_automatic: true }],
+    ['hockey_set_progression', { p_source_match_id: 'm', p_target_match_id: null, p_slot: null, p_automatic: false }],
+    ['hockey_advance_winner', { p_source_match_id: 'm', p_target_match_id: 'next', p_slot: 'away' }],
+    ['hockey_assign_bye', { p_team_id: 'a', p_target_match_id: 'next', p_slot: 'home', p_note: 'Bye' }],
+    ['hockey_remove_advancement', { p_advancement_id: 'adv' }]
+  ]);
+});
+
 test('public data requests published announcements only; CMS can load drafts', async () => {
   const queries = [];
   supabase.from.mockImplementation((name) => {
@@ -99,8 +124,11 @@ test('public data requests published announcements only; CMS can load drafts', a
   await getSeasonData('anjk-3');
   const publicQuery = queries.find(({ name }) => name === 'hockey_announcements').chain;
   expect(publicQuery.eq).toHaveBeenCalledWith('is_published',true);
+  expect(queries.map(({ name }) => name)).toEqual(expect.arrayContaining(['hockey_rounds', 'hockey_advancements','hockey_tournament_documents']));
+  expect(queries.find(({name}) => name==='hockey_tournament_documents').chain.eq).toHaveBeenCalledWith('is_published',true);
   queries.length = 0;
   await getSeasonData('anjk-3',true);
   const adminQuery = queries.find(({ name }) => name === 'hockey_announcements').chain;
   expect(adminQuery.eq).not.toHaveBeenCalledWith('is_published',true);
+  expect(queries.find(({name}) => name==='hockey_tournament_documents').chain.eq).not.toHaveBeenCalledWith('is_published',true);
 });

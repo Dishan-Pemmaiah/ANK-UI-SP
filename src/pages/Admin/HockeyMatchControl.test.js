@@ -13,8 +13,8 @@ const setup = (overrides = {}) => {
     busy:false, matchAction:jest.fn(), correct:{ home:0,away:1 }, setCorrect:jest.fn(),
     saveCorrection:jest.fn(), saveGoalCorrection:jest.fn().mockResolvedValue(true), requestDeleteMatch:jest.fn(), confirmEnd:false, setConfirmEnd:jest.fn(), ...overrides
   };
-  render(<MemoryRouter><HockeyMatchControl {...props} /></MemoryRouter>);
-  return props;
+  const view = render(<MemoryRouter><HockeyMatchControl {...props} /></MemoryRouter>);
+  return { ...props, rerender: (next) => view.rerender(<MemoryRouter><HockeyMatchControl {...props} {...next} /></MemoryRouter>) };
 };
 
 test('live controls show phase, large score and quick goals without a selected scorer', () => {
@@ -59,4 +59,75 @@ test('Match Control exposes match deletion through the confirmation flow', () =>
   const props = setup();
   fireEvent.click(screen.getByRole('button', { name: 'Delete match' }));
   expect(props.requestDeleteMatch).toHaveBeenCalledWith(match);
+});
+
+test('refreshing a live match keeps one editable update and player form', () => {
+  const props = setup();
+  fireEvent.change(screen.getByLabelText('Public match note'), { target: { value: 'Rain delay' } });
+  fireEvent.change(screen.getByLabelText('Player name'), { target: { value: 'New striker' } });
+  for (let index = 0; index < 3; index += 1) {
+    props.rerender({ selectedMatch: { ...match }, matches: [{ ...match }] });
+    expect(screen.getAllByText('Match update')).toHaveLength(1);
+    expect(screen.getAllByText('Add player for this match')).toHaveLength(1);
+    expect(screen.getByLabelText('Public match note')).toHaveValue('Rain delay');
+    expect(screen.getByLabelText('Player name')).toHaveValue('New striker');
+  }
+  fireEvent.change(screen.getByLabelText('Public match note'), { target: { value: 'Rain delayed' } });
+  expect(screen.getByLabelText('Public match note')).toHaveValue('Rain delayed');
+});
+
+test('tied knockout match requires a chosen winner and shootout decision', async () => {
+  const tied = { ...match, home_score: 1, away_score: 1 };
+  const completeKnockout = jest.fn().mockResolvedValue(true);
+  const props = setup({ selectedMatch: tied, matches: [tied], isKnockout: true, completeKnockout });
+  fireEvent.click(screen.getByRole('button', { name: 'END MATCH' }));
+  props.rerender({ confirmEnd: true });
+  expect(screen.getByRole('button', { name: 'Confirm final result' })).toBeDisabled();
+  fireEvent.mouseDown(screen.getByLabelText('Winner'));
+  fireEvent.click(screen.getByRole('option', { name: 'Alpha' }));
+  fireEvent.mouseDown(screen.getByLabelText('Decision method'));
+  fireEvent.click(screen.getByRole('option', { name: 'Shootout' }));
+  fireEvent.change(screen.getByLabelText('Team A shootout'), { target: { value: '4' } });
+  fireEvent.change(screen.getByLabelText('Team B shootout'), { target: { value: '3' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm final result' }));
+  expect(completeKnockout).toHaveBeenCalledWith('a', 'Shootout', 4, 3);
+});
+
+test('non-tied knockout preselects higher scorer; a walkover needs a real opponent and explicit winner', () => {
+  const completeKnockout = jest.fn().mockResolvedValue(true);
+  const props = setup({ isKnockout: true, completeKnockout });
+  fireEvent.click(screen.getByRole('button', { name: 'END MATCH' }));
+  props.rerender({ confirmEnd: true });
+  expect(screen.getByLabelText('Winner')).toHaveTextContent('Bravo');
+  fireEvent.click(screen.getByRole('button', { name: 'Keep match open' }));
+});
+
+test('TBD knockout fixture cannot start', () => {
+  const tbd = { ...match, status: 'Upcoming', home_team_id: null, home: null };
+  setup({ selectedMatch: tbd, matches: [tbd], isKnockout: true });
+  expect(screen.getByRole('button', { name: 'START MATCH' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Record walkover' })).toBeDisabled();
+});
+
+test('upcoming knockout walkover records an explicit winner without adding goals', () => {
+  const upcoming = { ...match, status: 'Upcoming', home_score: 0, away_score: 0 };
+  const completeKnockout = jest.fn().mockResolvedValue(true);
+  const props = setup({ selectedMatch: upcoming, matches: [upcoming], isKnockout: true, completeKnockout });
+  fireEvent.click(screen.getByRole('button', { name: 'Record walkover' }));
+  props.rerender({ confirmEnd: true });
+  fireEvent.mouseDown(screen.getByLabelText('Winner'));
+  fireEvent.click(screen.getByRole('option', { name: 'Alpha' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm final result' }));
+  expect(completeKnockout).toHaveBeenCalledWith('a', 'Walkover', null, null);
+});
+
+test('knockout score correction requires the winner and blocks while advanced', () => {
+  const completed = { ...match, status: 'Completed', home_score: 2, away_score: 1, winner_team_id: 'a', decision_method: 'Normal' };
+  const saveKnockoutCorrection = jest.fn();
+  const props = setup({ selectedMatch: completed, matches: [completed], isKnockout: true, saveKnockoutCorrection, correct: { home: 2, away: 1 }, hasAdvancement: true });
+  expect(screen.getByText(/Remove the winner's existing advancement/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Save knockout correction' })).toBeDisabled();
+  props.rerender({ hasAdvancement: false });
+  fireEvent.click(screen.getByRole('button', { name: 'Save knockout correction' }));
+  expect(saveKnockoutCorrection).toHaveBeenCalledWith('a', 'Normal', null, null);
 });

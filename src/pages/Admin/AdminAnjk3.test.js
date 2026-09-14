@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AdminAnjk3 from './AdminAnjk3';
-import { deleteMatch, getSeasonData, saveMatch, savePlayer, saveSeason } from '../../services/hockeyService';
+import { deleteMatch, getSeasonData, saveMatch, savePlayer, saveRound, saveSeason } from '../../services/hockeyService';
 
 jest.mock('../../services/hockeyService', () => ({
   getSeasonData: jest.fn(), saveSeason: jest.fn(), saveTeam: jest.fn(), deleteTeam: jest.fn(),
   savePlayer: jest.fn(), deletePlayer: jest.fn(), saveMatch: jest.fn(), deleteMatch: jest.fn(), controlMatch: jest.fn(),
-  correctResult: jest.fn(), saveAnnouncement: jest.fn(), deleteAnnouncement: jest.fn()
+  correctResult: jest.fn(), saveAnnouncement: jest.fn(), deleteAnnouncement: jest.fn(), saveRound: jest.fn()
 }));
 
 const season = { id:'season-1', slug:'anjk-3', name:'ANJK 3', starts_at:null, ends_at:null,
@@ -90,4 +90,16 @@ test('Match Control publishes a note and adds a player to the selected match tea
   await waitFor(() => expect(screen.getByRole('button', { name: 'Add player to team' })).toBeEnabled());
   fireEvent.click(screen.getByRole('button', { name: 'Add player to team' }));
   await waitFor(() => expect(savePlayer).toHaveBeenCalledWith({ season_id: 'season-1', team_id: 'a', name: 'New scorer', shirt_number: 11 }));
+});
+
+test('knockout format shows round management and hides points settings', async () => {
+  getSeasonData.mockResolvedValue({ ...data, season: { ...season, tournament_format: 'Knockout' }, rounds: [], advancements: [] });
+  saveRound.mockResolvedValue({ id: 'round-1' });
+  render(<MemoryRouter initialEntries={['/admin/anjk-3']}><Routes><Route path="/admin/anjk-3" element={<AdminAnjk3 />} /></Routes></MemoryRouter>);
+  expect(await screen.findByRole('tab', { name: 'Knockout Management' })).toBeInTheDocument();
+  expect(screen.queryByLabelText('win points')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('tab', { name: 'Knockout Management' }));
+  fireEvent.change(screen.getByLabelText('New round name'), { target: { value: 'Preliminary' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Add round' }));
+  await waitFor(() => expect(saveRound).toHaveBeenCalledWith(expect.objectContaining({ season_id: 'season-1', name: 'Preliminary', sort_order: 0, is_final: false }), undefined));
 });

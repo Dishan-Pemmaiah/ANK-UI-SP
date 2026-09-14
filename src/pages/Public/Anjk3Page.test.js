@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Anjk3Page from './Anjk3Page';
 import { getSeasonData } from '../../services/hockeyService';
@@ -62,4 +62,27 @@ test('a match update is shown on a completed fixture and manual Refresh requests
   expect(await screen.findByText('Match update: Won in sudden death')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Refresh tournament' }));
   expect(getSeasonData).toHaveBeenCalledTimes(2);
+});
+
+test('knockout format hides Points Table, while league format keeps it', async () => {
+  getSeasonData.mockResolvedValue({ season: { id: 's', name: 'Knockout', tournament_format: 'Knockout' }, teams: [], matches: [], rounds: [], standings: [], advancements: [], announcements: [], players: [], events: [] });
+  const view = render(<MemoryRouter initialEntries={['/anjk-3?tab=points-table']}><Routes><Route path="/anjk-3" element={<Anjk3Page />} /></Routes></MemoryRouter>);
+  expect(await screen.findByRole('tab', { name: 'Knockouts' })).toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByRole('tab', { name: 'Points Table' })).not.toBeInTheDocument());
+  view.unmount();
+  getSeasonData.mockResolvedValue({ season: { id: 's', name: 'League', tournament_format: 'League' }, teams: [], matches: [], rounds: [], standings: [], advancements: [], announcements: [], players: [], events: [] });
+  render(<MemoryRouter initialEntries={['/anjk-3?tab=points-table']}><Routes><Route path="/anjk-3" element={<Anjk3Page />} /></Routes></MemoryRouter>);
+  expect(await screen.findByRole('tab', { name: 'Points Table' })).toBeInTheDocument();
+});
+
+test('Overview links to the latest published Draw / Ties and draft metadata is never displayed', async () => {
+  getSeasonData.mockResolvedValue({ season:{id:'s',name:'ANJK 3'},teams:[],matches:[],rounds:[],standings:[],announcements:[],players:[],events:[],
+    drawDocuments:[{id:'v2',title:'Revised official draw',version_number:2,is_current:true,is_published:true,updated_at:'2026-09-14T11:00:00Z',revision_note:'Tie 18 changed'},
+      {id:'draft',title:'Secret draft',version_number:3,is_published:false}] });
+  render(<MemoryRouter initialEntries={['/anjk-3']}><Routes><Route path="/anjk-3" element={<Anjk3Page />} /></Routes></MemoryRouter>);
+  expect(await screen.findByText('Revised official draw')).toBeInTheDocument();
+  expect(screen.getByRole('link',{name:'View Draw'})).toHaveAttribute('href','/anjk-3?tab=draw');
+  expect(screen.getByText('Updated draw: Tie 18 changed')).toBeInTheDocument();
+  expect(screen.queryByText('Secret draft')).not.toBeInTheDocument();
+  expect(screen.getByRole('tab',{name:'Draw / Ties'})).toBeInTheDocument();
 });

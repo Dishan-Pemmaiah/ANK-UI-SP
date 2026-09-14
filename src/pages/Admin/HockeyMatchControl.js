@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
 import HockeyMatchCard from '../../components/HockeyMatchCard';
 
 function GoalCorrections({ match, players, events, busy, onSave }) {
@@ -46,16 +46,40 @@ function MatchExtras({ match, busy, onSaveNote, onAddPlayer }) {
   </Stack>;
 }
 
-export default function HockeyMatchControl({ matches, players, events = [], selectedMatch, selectMatch, scorers, setScorers, busy, matchAction, correct, setCorrect, saveCorrection, saveGoalCorrection, onSaveNote, onAddPlayer, requestDeleteMatch, confirmEnd, setConfirmEnd }) {
+function KnockoutCorrection({ match, correct, setCorrect, busy, hasAdvancement, onSave }) {
+  const [winner, setWinner] = useState(match.winner_team_id || '');
+  const [method, setMethod] = useState(match.decision_method || 'Normal');
+  const [homeShootout, setHomeShootout] = useState(match.shootout_home ?? '');
+  const [awayShootout, setAwayShootout] = useState(match.shootout_away ?? '');
+  const scoresValid = [correct.home, correct.away].every((value) => value !== '' && Number.isInteger(Number(value)) && Number(value) >= 0);
+  return <Paper sx={{ p: 2 }}><Typography variant="h6">Correct knockout result</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Save the score and winner together. Goal credit is reconciled with the result.</Typography>
+    {hasAdvancement && <Alert severity="warning" sx={{ mb: 1.5 }}>Remove the winner's existing advancement in Knockout Management before correcting this result.</Alert>}
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}><TextField fullWidth size="small" type="number" label={match.home?.name} value={correct.home} onChange={(e) => setCorrect({ ...correct, home: e.target.value })} inputProps={{ min: 0 }} /><TextField fullWidth size="small" type="number" label={match.away?.name} value={correct.away} onChange={(e) => setCorrect({ ...correct, away: e.target.value })} inputProps={{ min: 0 }} /></Stack>
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1 }}><TextField select fullWidth size="small" label="Corrected winner" value={winner} onChange={(e) => setWinner(e.target.value)}><MenuItem value="">Select winner</MenuItem>{[match.home,match.away].filter(Boolean).map((team) => <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>)}</TextField><TextField select fullWidth size="small" label="Corrected decision" value={method} onChange={(e) => setMethod(e.target.value)}>{['Normal','Shootout','Walkover','Other'].map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</TextField></Stack>
+    {method === 'Shootout' && <Stack direction="row" spacing={1} sx={{ mt: 1 }}><TextField fullWidth size="small" type="number" label="Team A shootout" value={homeShootout} onChange={(e) => setHomeShootout(e.target.value)} inputProps={{ min: 0 }} /><TextField fullWidth size="small" type="number" label="Team B shootout" value={awayShootout} onChange={(e) => setAwayShootout(e.target.value)} inputProps={{ min: 0 }} /></Stack>}
+    <Button sx={{ mt: 1.5 }} disabled={busy || hasAdvancement || !scoresValid || !winner || (method === 'Shootout' && (homeShootout === '' || awayShootout === ''))} onClick={() => onSave(winner,method,method === 'Shootout' ? Number(homeShootout) : null,method === 'Shootout' ? Number(awayShootout) : null)}>Save knockout correction</Button>
+  </Paper>;
+}
+
+export default function HockeyMatchControl({ matches, players, events = [], selectedMatch, selectMatch, scorers, setScorers, busy, matchAction, isKnockout = false, completeKnockout, controlError, correct, setCorrect, saveCorrection, saveKnockoutCorrection, hasAdvancement = false, saveGoalCorrection, onSaveNote, onAddPlayer, requestDeleteMatch, confirmEnd, setConfirmEnd }) {
+  const [endWinner, setEndWinner] = useState('');
+  const [endMethod, setEndMethod] = useState('');
+  const [shootoutHome, setShootoutHome] = useState('');
+  const [shootoutAway, setShootoutAway] = useState('');
+  const openEnd = (method = '') => {
+    setEndWinner(selectedMatch.home_score === selectedMatch.away_score ? '' : selectedMatch.home_score > selectedMatch.away_score ? selectedMatch.home_team_id : selectedMatch.away_team_id);
+    setEndMethod(method || (selectedMatch.home_score === selectedMatch.away_score ? '' : 'Normal'));
+    setShootoutHome(''); setShootoutAway(''); setConfirmEnd(true);
+  };
   const teamPlayers = (teamId) => players.filter((player) => player.team_id === teamId);
   return <Stack spacing={2}>
     <TextField select fullWidth size="small" label="Select match" value={selectedMatch?.id || ''} onChange={(event) => selectMatch(matches.find((match) => match.id === event.target.value))}>
       <MenuItem value="">Choose a match</MenuItem>
-      {matches.map((match) => <MenuItem key={match.id} value={match.id}>{match.home?.name} vs {match.away?.name} · {match.status}</MenuItem>)}
+      {matches.map((match) => <MenuItem key={match.id} value={match.id}>{match.home?.name || match.home_slot_label || 'TBD'} vs {match.away?.name || match.away_slot_label || 'TBD'} · {match.status}</MenuItem>)}
     </TextField>
     {selectedMatch && <>
       <HockeyMatchCard match={selectedMatch} />
-      {selectedMatch.status === 'Upcoming' && <Button fullWidth size="large" variant="contained" disabled={busy} onClick={() => matchAction('start')} sx={{ py: 2, fontWeight: 900 }}>START MATCH</Button>}
+      {selectedMatch.status === 'Upcoming' && <><Button fullWidth size="large" variant="contained" disabled={busy || !selectedMatch.home_team_id || !selectedMatch.away_team_id} onClick={() => matchAction('start')} sx={{ py: 2, fontWeight: 900 }}>START MATCH</Button>{isKnockout && <Button disabled={busy || !selectedMatch.home_team_id || !selectedMatch.away_team_id} onClick={() => openEnd('Walkover')}>Record walkover</Button>}{isKnockout && (!selectedMatch.home_team_id || !selectedMatch.away_team_id) && <Typography color="text.secondary">Assign both real teams before starting or recording a walkover.</Typography>}</>}
       {selectedMatch.status === 'Live' && <Paper sx={{ p: { xs: 1.5, sm: 2 }, border: '1px solid #a33' }}>
         <Stack direction="row" justifyContent="center" alignItems="center" spacing={2} sx={{ mb: 1 }}><Chip label={`● ${selectedMatch.phase || '1st Half'}`} color="error" /><Typography variant="caption" color="text.secondary">Match phase</Typography></Stack>
         <Stack direction="row" justifyContent="center" alignItems="center" spacing={{ xs: 1, sm: 3 }} sx={{ mb: 2 }}>
@@ -74,14 +98,21 @@ export default function HockeyMatchControl({ matches, players, events = [], sele
           {selectedMatch.phase === '1st Half' && <Button fullWidth variant="outlined" disabled={busy} onClick={() => matchAction('phase_half')}>Half Time</Button>}
           {selectedMatch.phase === 'Half Time' && <Button fullWidth variant="outlined" disabled={busy} onClick={() => matchAction('phase_second')}>Start 2nd Half</Button>}
         </Stack>
-        <Box sx={{ borderTop: '1px solid #555', mt: 2, pt: 2 }}><Button fullWidth color="error" variant="contained" disabled={busy} onClick={() => setConfirmEnd(true)} sx={{ minHeight: 58, fontWeight: 900 }}>END MATCH</Button></Box>
+        <Box sx={{ borderTop: '1px solid #555', mt: 2, pt: 2 }}><Button fullWidth color="error" variant="contained" disabled={busy} onClick={() => isKnockout ? openEnd() : setConfirmEnd(true)} sx={{ minHeight: 58, fontWeight: 900 }}>END MATCH</Button></Box>
       </Paper>}
       {['Upcoming', 'Live'].includes(selectedMatch.status) && <Stack direction="row" spacing={1}><Button disabled={busy} onClick={() => { if (window.confirm('Postpone this match?')) matchAction('postpone'); }}>Postpone</Button><Button disabled={busy} color="error" onClick={() => { if (window.confirm('Cancel this match?')) matchAction('cancel'); }}>Cancel</Button></Stack>}
-      {selectedMatch.status === 'Completed' && <Paper sx={{ p: 2 }}><Typography variant="h6">Correct final result</Typography><Typography variant="body2" color="text.secondary">Changing the total adds unassigned goals or removes the most recent goals. For a specific goal or player, use the corrections below.</Typography><Stack direction="row" spacing={1} sx={{ mt: 2 }}><TextField fullWidth size="small" type="number" label={selectedMatch.home?.name} value={correct.home} onChange={(event) => setCorrect({ ...correct, home: event.target.value })} inputProps={{ min: 0 }} /><TextField fullWidth size="small" type="number" label={selectedMatch.away?.name} value={correct.away} onChange={(event) => setCorrect({ ...correct, away: event.target.value })} inputProps={{ min: 0 }} /></Stack><Button sx={{ mt: 2 }} disabled={busy || correct.home === '' || correct.away === '' || !Number.isInteger(Number(correct.home)) || !Number.isInteger(Number(correct.away)) || Number(correct.home) < 0 || Number(correct.away) < 0} onClick={saveCorrection}>Save correction</Button></Paper>}
-      <MatchExtras key={selectedMatch.id} match={selectedMatch} busy={busy} onSaveNote={onSaveNote} onAddPlayer={onAddPlayer} />
-      {['Live', 'Completed'].includes(selectedMatch.status) && <GoalCorrections key={selectedMatch.id} match={selectedMatch} players={players} events={events} busy={busy} onSave={saveGoalCorrection} />}
+      {selectedMatch.status === 'Completed' && (isKnockout ? <KnockoutCorrection key={selectedMatch.id} match={selectedMatch} correct={correct} setCorrect={setCorrect} busy={busy} hasAdvancement={hasAdvancement} onSave={saveKnockoutCorrection} /> : <Paper sx={{ p: 2 }}><Typography variant="h6">Correct final result</Typography><Typography variant="body2" color="text.secondary">Changing the total adds unassigned goals or removes the most recent goals. For a specific goal or player, use the corrections below.</Typography><Stack direction="row" spacing={1} sx={{ mt: 2 }}><TextField fullWidth size="small" type="number" label={selectedMatch.home?.name} value={correct.home} onChange={(event) => setCorrect({ ...correct, home: event.target.value })} inputProps={{ min: 0 }} /><TextField fullWidth size="small" type="number" label={selectedMatch.away?.name} value={correct.away} onChange={(event) => setCorrect({ ...correct, away: event.target.value })} inputProps={{ min: 0 }} /></Stack><Button sx={{ mt: 2 }} disabled={busy || correct.home === '' || correct.away === '' || !Number.isInteger(Number(correct.home)) || !Number.isInteger(Number(correct.away)) || Number(correct.home) < 0 || Number(correct.away) < 0} onClick={saveCorrection}>Save correction</Button></Paper>)}
+      <MatchExtras key={`extras-${selectedMatch.id}`} match={selectedMatch} busy={busy} onSaveNote={onSaveNote} onAddPlayer={onAddPlayer} />
+      {['Live', 'Completed'].includes(selectedMatch.status) && <GoalCorrections key={`goals-${selectedMatch.id}`} match={selectedMatch} players={players} events={events} busy={busy} onSave={saveGoalCorrection} />}
       <Button color="error" variant="outlined" disabled={busy} onClick={() => requestDeleteMatch(selectedMatch)} sx={{ alignSelf: 'flex-start' }}>Delete match</Button>
     </>}
-    <Dialog open={confirmEnd} onClose={() => { if (!busy) setConfirmEnd(false); }}><DialogTitle>End match?</DialogTitle><DialogContent>The current score will become the final result and the points table will update automatically.</DialogContent><DialogActions><Button disabled={busy} onClick={() => setConfirmEnd(false)}>Keep live</Button><Button disabled={busy} color="error" variant="contained" onClick={() => { setConfirmEnd(false); matchAction('end'); }}>Confirm final result</Button></DialogActions></Dialog>
+    <Dialog open={confirmEnd} onClose={() => { if (!busy) setConfirmEnd(false); }} fullWidth maxWidth="xs"><DialogTitle>{isKnockout ? 'Confirm knockout winner' : 'End match?'}</DialogTitle><DialogContent>
+      {isKnockout ? <Stack spacing={1.5} sx={{ pt: 1 }}><Typography variant="body2" color="text.secondary">Final score: {selectedMatch?.home_score}–{selectedMatch?.away_score}. Confirm the winner and decision before completing the match.</Typography>
+        <TextField select fullWidth size="small" label="Winner" value={endWinner} onChange={(e) => setEndWinner(e.target.value)}><MenuItem value="">Select winner</MenuItem>{[selectedMatch?.home,selectedMatch?.away].filter(Boolean).map((team) => <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>)}</TextField>
+        <TextField select fullWidth size="small" label="Decision method" value={endMethod} onChange={(e) => setEndMethod(e.target.value)}><MenuItem value="">Select method</MenuItem>{['Normal','Shootout','Walkover','Other'].map((method) => <MenuItem key={method} value={method}>{method}</MenuItem>)}</TextField>
+        {endMethod === 'Shootout' && <Stack direction="row" spacing={1}><TextField fullWidth size="small" type="number" label="Team A shootout" value={shootoutHome} onChange={(e) => setShootoutHome(e.target.value)} inputProps={{ min: 0 }} /><TextField fullWidth size="small" type="number" label="Team B shootout" value={shootoutAway} onChange={(e) => setShootoutAway(e.target.value)} inputProps={{ min: 0 }} /></Stack>}
+        {controlError && <Alert severity="error">{controlError}</Alert>}
+      </Stack> : 'The current score will become the final result and the points table will update automatically.'}
+    </DialogContent><DialogActions><Button disabled={busy} onClick={() => setConfirmEnd(false)}>{isKnockout ? 'Keep match open' : 'Keep live'}</Button><Button disabled={busy || (isKnockout && (!endWinner || !endMethod || (endMethod === 'Shootout' && (shootoutHome === '' || shootoutAway === ''))))} color="error" variant="contained" onClick={async () => { if (isKnockout) { if (await completeKnockout(endWinner,endMethod,endMethod === 'Shootout' ? Number(shootoutHome) : null,endMethod === 'Shootout' ? Number(shootoutAway) : null)) setConfirmEnd(false); } else { setConfirmEnd(false); matchAction('end'); } }}>Confirm final result</Button></DialogActions></Dialog>
   </Stack>;
 }

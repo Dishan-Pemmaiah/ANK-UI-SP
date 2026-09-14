@@ -42,3 +42,10 @@ test('clicking the Home poster opens ANJK 3 while Explore remains a link', async
   fireEvent.click(screen.getByAltText('ANJK 3 poster'));
   expect(await screen.findByText('Tournament destination')).toBeInTheDocument();
 });
+
+test('Home keeps its match sections but omits points for knockout format', async () => {
+  getSeasonData.mockResolvedValue({ season: { name: 'Knockout', tournament_format: 'Knockout' }, matches: [fixture('Completed')], standings: [{ team_id: 'a', team_name: 'Alpha', played: 1, points: 3, goal_difference: 1 }] });
+  renderPanel();
+  expect(await screen.findByText('LATEST RESULT')).toBeInTheDocument();
+  expect(screen.queryByText('Points Table')).not.toBeInTheDocument();
+});
