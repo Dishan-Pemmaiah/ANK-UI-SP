@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Alert, Box, Button, Chip, Grid, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HockeyMatchCard from '../../components/HockeyMatchCard';
 import { getSeasonData } from '../../services/hockeyService';
 import { getTournamentState, tournamentDayKey } from '../../services/tournamentState';
 import { getHockeyStats } from '../../services/hockeyStats';
+import { formatSeasonDates } from '../../services/hockeyDates';
+import AuthContext from '../../context/AuthContext';
 
 const tabs = ['Overview', 'Fixtures', 'Live', 'Results', 'Points Table', 'Teams', 'Knockouts', 'Stats'];
 const slug = (tab) => tab.toLowerCase().replace(' ', '-');
@@ -24,6 +26,7 @@ function Standings({ rows }) {
 }
 
 export default function Anjk3Page() {
+  const auth = useContext(AuthContext);
   const { slug: seasonSlug = 'anjk-3' } = useParams();
   const basePath = seasonSlug === 'anjk-3' ? '/anjk-3' : `/tournaments/${seasonSlug}`;
   const [params, setParams] = useSearchParams();
@@ -54,18 +57,22 @@ export default function Anjk3Page() {
   };
   const season = data?.season;
   const champion = data?.teams.find((team) => team.id === season?.champion_team_id);
+  const seasonDates = formatSeasonDates(season?.starts_at, season?.ends_at);
+  const liveEvents = (data?.events || []).filter((event) => ['Goal', 'Started', 'Phase Changed'].includes(event.event_type) && !event.is_voided && filteredByStatus(['Live']).some((match) => match.id === event.match_id));
+  const controlPath = seasonSlug === 'anjk-3' ? '/admin/anjk-3' : `/admin/tournaments/${seasonSlug}`;
   return <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 6 }}>
     <Paper sx={{ p: { xs: 2.5, md: 4 }, mb: 3, borderRadius: 4, background: 'linear-gradient(130deg,#271010,#101010 60%,#14201b)' }}>
       <Typography variant="overline" sx={{ color: '#e0b08f', letterSpacing: 3 }}>ANJK Hockey Tournament</Typography>
       <Typography component="h1" variant="h3" sx={{ fontWeight: 900 }}>{season?.name || seasonSlug.toUpperCase().replace(/-/g, ' ')}</Typography>
       {season?.description && <Typography sx={{ mt: 1, color: '#ccc' }}>{season.description}</Typography>}
       {season?.venue && <Typography sx={{ mt: 1 }}>📍 {season.venue}</Typography>}
+      {seasonDates && <Typography sx={{ mt: 1, fontWeight: 800 }}>📅 {seasonDates}</Typography>}
       {season?.poster_url && <Box sx={{ mt: 2, textAlign: 'center', bgcolor: '#0c0c0c', borderRadius: 2, p: 1 }}><Box component="img" src={season.poster_url} alt={`${season.name} poster`} sx={{ display: 'block', width: 'auto', maxWidth: '100%', maxHeight: { xs: 620, md: 500 }, height: 'auto', objectFit: 'contain', mx: 'auto' }} /></Box>}
     </Paper>
     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
     <Tabs value={tab} onChange={(_, value) => setParams({ tab: slug(value) })} variant="scrollable" scrollButtons="auto" sx={{ mb: 3, borderBottom: '1px solid #333' }}>{tabs.map((item) => <Tab key={item} value={item} label={item} />)}</Tabs>
     {tab === 'Overview' && <Stack spacing={3}>
-      {state.live && <Box><Typography variant="h5" sx={{ mb: 1, color: '#ff5555', fontWeight: 900 }}>● LIVE NOW</Typography><HockeyMatchCard match={state.live} basePath={basePath} /></Box>}
+      {state.live && <Box><Button component={Link} to={`${basePath}?tab=live#match-${state.live.id}`} sx={{ mb: 1, color: '#ff5555', fontWeight: 900, fontSize: '1.4rem', px: 0 }}>● LIVE NOW</Button><HockeyMatchCard match={state.live} basePath={basePath} />{auth?.isAdmin && <Button component={Link} to={`${controlPath}?tab=match-control&match=${state.live.id}`} sx={{ mt: 1 }}>Control live match in CMS</Button>}</Box>}
       {!state.live && state.next && <Box><Typography variant="h5" sx={{ mb: 1 }}>Next Match</Typography><HockeyMatchCard match={state.next} basePath={basePath} /></Box>}
       {data?.announcements?.some((item) => item.is_published) && <Box><Typography variant="h5" sx={{ mb: 1 }}>Announcements</Typography>{data.announcements.filter((item) => item.is_published).map((item) => <Paper key={item.id} sx={{ p: 2, mb: 1 }}><Typography fontWeight={800}>{item.title}</Typography><Typography>{item.body}</Typography></Paper>)}</Box>}
       {state.results.length > 0 && <Box><Typography variant="h5" sx={{ mb: 1 }}>Latest Results</Typography><MatchList matches={state.results.slice(0,3)} basePath={basePath} /></Box>}
@@ -82,7 +89,7 @@ export default function Anjk3Page() {
       {tab === 'Fixtures' && <Stack direction="row" spacing={1}><Chip label="Today" onClick={() => setDate(tournamentDayKey(new Date()))} /><Chip label="Upcoming" onClick={() => setDate('')} /></Stack>}
       <MatchList matches={filteredByStatus(tab === 'Fixtures' ? ['Upcoming','Live','Postponed','Cancelled'] : ['Completed'])} basePath={basePath} emptyMessage={date || pool || stage ? 'No matches match these filters.' : 'No matches to show yet.'} />
     </Stack>}
-    {tab === 'Live' && <Stack spacing={2}><MatchList matches={filteredByStatus(['Live'])} basePath={basePath} />{data?.events.filter((event) => filteredByStatus(['Live']).some((match) => match.id === event.match_id)).slice(0,12).map((event) => <Paper key={event.id} sx={{ p: 1.5 }}><Typography fontWeight={800}>{event.event_type === 'Goal' && event.is_voided ? 'Goal (reversed)' : event.event_type} {data.teams.find((team) => team.id === event.team_id)?.name || ''}{event.player_id && !event.is_voided ? ` · ${data.players.find((player) => player.id === event.player_id)?.name || ''}` : ''}{event.event_type === 'Phase Changed' ? ` · ${event.note}` : ''}</Typography><Typography variant="caption" color="text.secondary">{new Date(event.created_at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</Typography></Paper>)}</Stack>}
+    {tab === 'Live' && <Stack spacing={2}><MatchList matches={filteredByStatus(['Live'])} basePath={basePath} />{auth?.isAdmin && filteredByStatus(['Live']).map((match) => <Button key={match.id} component={Link} to={`${controlPath}?tab=match-control&match=${match.id}`} variant="outlined">Control {match.home?.name} vs {match.away?.name} in CMS</Button>)}{liveEvents.slice(0,12).map((event) => <Paper key={event.id} sx={{ p: 1.5 }}><Typography fontWeight={800}>{event.event_type} {data.teams.find((team) => team.id === event.team_id)?.name || ''}{event.player_id ? ` · ${data.players.find((player) => player.id === event.player_id)?.name || ''}` : ''}{event.event_type === 'Phase Changed' ? ` · ${event.note}` : ''}</Typography><Typography variant="caption" color="text.secondary">{new Date(event.created_at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</Typography></Paper>)}</Stack>}
     {tab === 'Points Table' && <Standings rows={data?.standings || []} />}
     {tab === 'Teams' && <Grid container spacing={2}>{data?.teams.map((team) => <Grid item xs={12} sm={6} md={4} key={team.id}><Paper sx={{ p: 2, height: '100%' }}><Typography variant="h6" fontWeight={800}>{team.name}</Typography><Typography color="text.secondary">{team.pool ? `Pool ${team.pool}` : 'League'}</Typography>{data.players.filter((player) => player.team_id === team.id).length > 0 && <Box sx={{ mt: 2 }}><Typography variant="subtitle2" sx={{ mb: 1, color: '#dcb99b' }}>Players</Typography><Stack spacing={0.75}>{data.players.filter((player) => player.team_id === team.id).map((player) => <Stack key={player.id} direction="row" spacing={1} alignItems="center"><Chip size="small" label={player.shirt_number ?? '—'} sx={{ minWidth: 34 }} /><Typography>{player.name}</Typography></Stack>)}</Stack></Box>}</Paper></Grid>)}</Grid>}
     {tab === 'Knockouts' && <Box><Typography variant="h5" sx={{ mb: 2 }}>Knockout Bracket</Typography><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, minmax(0, 1fr))' }, gap: 2, alignItems: 'stretch' }}>{['Quarter Final','Semi Final','Final','Champion'].map((round, index) => <Box key={round} sx={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0, '&::after': index < 3 ? { content: '"→"', position: 'absolute', right: -17, top: '50%', color: '#dcb99b', fontSize: 24, zIndex: 1, display: { xs: 'none', md: 'block' } } : {} }}><Typography variant="h6" sx={{ mb: 1, color: '#dcb99b' }}>{round}</Typography>{round === 'Champion' ? <Paper sx={{ p: 2, border: '1px solid #9d7144', textAlign: 'center' }}><Typography variant="h4">🏆</Typography><Typography fontWeight={900}>{champion?.name || 'To be confirmed'}</Typography></Paper> : <Stack spacing={1.5}>{(data?.matches || []).filter((match) => match.stage === round).length ? (data?.matches || []).filter((match) => match.stage === round).map((match) => <HockeyMatchCard key={match.id} match={match} compact basePath={basePath} />) : <Paper sx={{ p: 2, color: '#aaa' }}>To be decided</Paper>}</Stack>}{index < 3 && <Typography sx={{ display: { xs: 'block', md: 'none' }, textAlign: 'center', color: '#dcb99b', fontSize: 24 }}>↓</Typography>}</Box>)}</Box></Box>}

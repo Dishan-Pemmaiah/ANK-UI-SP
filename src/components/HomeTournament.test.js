@@ -15,6 +15,7 @@ test('Home promotes live score and match link', async () => {
   getSeasonData.mockResolvedValue({ season:{ name:'ANJK 3' }, matches:[fixture('Live')], standings:[] });
   renderPanel();
   expect(await screen.findByText('● LIVE NOW')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: '● LIVE NOW' })).toHaveAttribute('href', '/anjk-3?tab=live#match-match-1');
   expect(screen.getByText('2 – 1')).toBeInTheDocument();
   expect(screen.getByRole('link', { name:'View Match' })).toHaveAttribute('href','/anjk-3?tab=live#match-match-1');
 });

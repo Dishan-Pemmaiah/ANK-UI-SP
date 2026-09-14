@@ -11,7 +11,7 @@ const setup = (overrides = {}) => {
     matches:[match], players:[{ id:'pa',team_id:'a',name:'A scorer',shirt_number:7 }],
     selectedMatch:match, selectMatch:jest.fn(), scorers:{ home:'',away:'' }, setScorers:jest.fn(),
     busy:false, matchAction:jest.fn(), correct:{ home:0,away:1 }, setCorrect:jest.fn(),
-    saveCorrection:jest.fn(), confirmEnd:false, setConfirmEnd:jest.fn(), ...overrides
+    saveCorrection:jest.fn(), saveGoalCorrection:jest.fn().mockResolvedValue(true), requestDeleteMatch:jest.fn(), confirmEnd:false, setConfirmEnd:jest.fn(), ...overrides
   };
   render(<MemoryRouter><HockeyMatchControl {...props} /></MemoryRouter>);
   return props;
@@ -39,4 +39,24 @@ test('ending a live match requires confirmation', () => {
   expect(screen.getByText('End match?')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name:'Confirm final result' }));
   expect(props.matchAction).toHaveBeenCalledWith('end');
+});
+
+test('completed match allows a specific goal scorer correction and removal', () => {
+  const completed = { ...match, status: 'Completed', home_score: 1 };
+  const goal = { id: 'goal-1', match_id: 'm', team_id: 'a', event_type: 'Goal', player_id: null, is_voided: false, created_at: '2026-09-14T10:00:00Z' };
+  const props = setup({ selectedMatch: completed, matches: [completed], events: [goal] });
+  fireEvent.mouseDown(screen.getByLabelText('Scorer for goal 1'));
+  fireEvent.click(screen.getByRole('option', { name: /A scorer/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save scorer' }));
+  expect(props.saveGoalCorrection).toHaveBeenCalledWith('assign', 'goal-1', 'a', 'pa');
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Remove goal' }));
+  expect(props.saveGoalCorrection).toHaveBeenCalledWith('remove', 'goal-1', 'a');
+  confirm.mockRestore();
+});
+
+test('Match Control exposes match deletion through the confirmation flow', () => {
+  const props = setup();
+  fireEvent.click(screen.getByRole('button', { name: 'Delete match' }));
+  expect(props.requestDeleteMatch).toHaveBeenCalledWith(match);
 });

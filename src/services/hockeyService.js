@@ -49,6 +49,7 @@ export const deletePlayer = async (id) => unwrap(await table('hockey_players').d
 export const saveMatch = async (payload, id) => unwrap(await (id
   ? table('hockey_matches').update(payload).eq('id', id).select('*').single()
   : table('hockey_matches').insert(payload).select('*').single()));
+export const deleteMatch = async (id) => unwrap(await table('hockey_matches').delete().eq('id', id).select('id').single());
 export const saveAnnouncement = async (payload, id) => unwrap(await (id
   ? table('hockey_announcements').update(payload).eq('id', id).select('*').single()
   : table('hockey_announcements').insert(payload).select('*').single()));
@@ -59,4 +60,7 @@ export const controlMatch = async (matchId, action, teamId = null, playerId = nu
 }));
 export const correctResult = async (matchId, homeScore, awayScore) => unwrap(await supabase.rpc('hockey_correct_result', {
   p_match_id: matchId, p_home_score: Number(homeScore), p_away_score: Number(awayScore)
+}));
+export const correctGoal = async (matchId, action, goalId = null, teamId = null, playerId = null) => unwrap(await supabase.rpc('hockey_correct_goal', {
+  p_match_id: matchId, p_action: action, p_goal_id: goalId, p_team_id: teamId, p_player_id: playerId || null
 }));

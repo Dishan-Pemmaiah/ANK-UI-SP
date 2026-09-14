@@ -1,4 +1,4 @@
-import { controlMatch, correctResult, deletePlayer, getSeasonData, saveMatch, savePlayer, saveSeason, saveTeam } from './hockeyService';
+import { controlMatch, correctGoal, correctResult, deleteMatch, deletePlayer, getSeasonData, saveMatch, savePlayer, saveSeason, saveTeam } from './hockeyService';
 import { supabase } from './supabaseClient';
 
 jest.mock('./supabaseClient', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
@@ -19,6 +19,14 @@ test('creates season, team, and fixture in separate tables', async () => {
   await saveMatch({ season_id:'season-1', home_team_id:'a', away_team_id:'b' });
   expect(supabase.from.mock.calls.map(([name]) => name)).toEqual(['hockey_seasons','hockey_teams','hockey_matches']);
   expect(chain.insert).toHaveBeenCalledTimes(3);
+});
+
+test('deletes only the selected hockey match', async () => {
+  const chain = query({ id: 'match-1' }); supabase.from.mockReturnValue(chain);
+  await deleteMatch('match-1');
+  expect(supabase.from).toHaveBeenCalledWith('hockey_matches');
+  expect(chain.delete).toHaveBeenCalledTimes(1);
+  expect(chain.eq).toHaveBeenCalledWith('id', 'match-1');
 });
 
 test('start, phase, scorer and quick goals, undo, end, postpone, cancel and correction use database actions', async () => {
@@ -50,6 +58,18 @@ test('start, phase, scorer and quick goals, undo, end, postpone, cancel and corr
 test('database rejection of a second live match is shown to the CMS caller', async () => {
   supabase.rpc.mockResolvedValue({ data: null, error: { message: 'Another match is already live. End or postpone it before starting this match.' } });
   await expect(controlMatch('match-2','start')).rejects.toThrow('Another match is already live');
+});
+
+test('goal corrections send the selected goal, team and scorer to one database action', async () => {
+  supabase.rpc.mockResolvedValue({ data: { id: 'match-1' }, error: null });
+  await correctGoal('match-1', 'assign', 'goal-1', 'team-a', 'player-a');
+  await correctGoal('match-1', 'remove', 'goal-2', 'team-b');
+  await correctGoal('match-1', 'add', null, 'team-a');
+  expect(supabase.rpc.mock.calls).toEqual([
+    ['hockey_correct_goal', { p_match_id: 'match-1', p_action: 'assign', p_goal_id: 'goal-1', p_team_id: 'team-a', p_player_id: 'player-a' }],
+    ['hockey_correct_goal', { p_match_id: 'match-1', p_action: 'remove', p_goal_id: 'goal-2', p_team_id: 'team-b', p_player_id: null }],
+    ['hockey_correct_goal', { p_match_id: 'match-1', p_action: 'add', p_goal_id: null, p_team_id: 'team-a', p_player_id: null }]
+  ]);
 });
 
 test('players can be created, edited and deleted', async () => {

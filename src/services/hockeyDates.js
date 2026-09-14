@@ -38,3 +38,12 @@ export const istLocalDateTimeToIso = (value) => {
   if (Number.isNaN(timestamp.getTime()) || toIstLocalDateTime(timestamp) !== value) throw new Error('Enter a valid fixture date and time.');
   return timestamp.toISOString();
 };
+
+export const formatSeasonDates = (startsAt, endsAt) => {
+  const format = (value) => value ? new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric'
+  }).format(new Date(value)) : '';
+  const start = format(startsAt);
+  const end = format(endsAt);
+  return start && end ? `${start} – ${end}` : start || end;
+};
