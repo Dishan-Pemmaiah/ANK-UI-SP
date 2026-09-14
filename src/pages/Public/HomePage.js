@@ -6,6 +6,7 @@ import newsApi from '../../services/newsService';
 import eventApi from '../../services/eventService';
 import achievementApi from '../../services/achievementService';
 import homeContentApi from '../../services/homeContentService';
+import HomeTournament from '../../components/HomeTournament';
 
 const logoSrc = '/ank-logo.jpeg';
 const instagramUrl = 'https://www.instagram.com/anjigeri_naad_club?igsh=NmYxbjc2bnBob3Bj';
@@ -203,6 +204,8 @@ export default function HomePage() {
           </Grid>
         </Grid>
       </Paper>
+
+      <HomeTournament />
 
       {homeContent.announcements.trim() ? (
         <Paper sx={{ p: { xs: 2.5, md: 3 }, mb: 4, background: '#141414' }}>

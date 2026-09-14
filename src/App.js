@@ -29,6 +29,8 @@ import EventsPage from './pages/Events/EventsPage';
 import EventDetailPage from './pages/Events/EventDetailPage';
 import EventFormPage from './pages/Events/EventFormPage';
 import SportsPage from './pages/Sports/SportsPage';
+import Anjk3Page from './pages/Public/Anjk3Page';
+import AdminAnjk3 from './pages/Admin/AdminAnjk3';
 import AdminLayout from './pages/Admin/AdminLayout';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import AdminMembers from './pages/Admin/AdminMembers';
@@ -112,6 +114,8 @@ function App() {
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="sports" element={<SportsPage />} />
+            <Route path="anjk-3" element={<Anjk3Page />} />
+            <Route path="tournaments/:slug" element={<Anjk3Page />} />
             <Route path="sports/hosted" element={<SportsPage />} />
             <Route path="sports/external" element={<SportsPage />} />
             <Route path="sports/live" element={<SportsPage />} />
@@ -131,6 +135,8 @@ function App() {
               <Route path="heritage" element={<AdminHeritage />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="sports" element={<AdminSports />} />
+              <Route path="anjk-3" element={<AdminAnjk3 />} />
+              <Route path="tournaments/:slug" element={<AdminAnjk3 />} />
               <Route path="sports/hosted" element={<AdminSports />} />
               <Route path="sports/external" element={<AdminSports />} />
               <Route path="sports/live" element={<AdminSports />} />

@@ -12,6 +12,7 @@ const items = [
   { label: 'Gallery', path: '/gallery' },
   { label: 'Events', path: '/events' },
   { label: 'Sports', path: '/sports' },
+  { label: 'ANJK 3', path: '/anjk-3' },
   { label: 'Achievements', path: '/achievements' }
 ];
 

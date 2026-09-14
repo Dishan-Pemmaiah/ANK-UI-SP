@@ -9,6 +9,7 @@ const items = [
   { label: 'Heritage', path: '/admin/heritage' },
   { label: 'Events', path: '/admin/events' },
   { label: 'Sports Overview', path: '/admin/sports' },
+  { label: 'ANJK 3 Hockey', path: '/admin/anjk-3' },
   { label: 'Sports Hosted', path: '/admin/sports/hosted' },
   { label: 'Sports External', path: '/admin/sports/external' },
   { label: 'Sports Live', path: '/admin/sports/live' },

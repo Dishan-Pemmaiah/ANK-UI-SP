@@ -36,13 +36,18 @@ npm run build
 1. Open Supabase SQL Editor.
 2. Run `supabase/rls.sql`.
 3. Confirm RLS is enabled and policies are created.
-4. Deploy the admin member function so administrator-created members also receive a Supabase Auth login (without changing the admin's session):
+4. Run `supabase/security-hardening-2026-08.sql` to fix advisor alerts like `rls_disabled_in_public` in a safe, idempotent way.
+5. Deploy the admin member function so administrator-created members also receive a Supabase Auth login (without changing the admin's session):
 
 ```bash
 supabase functions deploy admin-manage-member
 ```
 
 The function uses the platform-provided `SUPABASE_SERVICE_ROLE_KEY`; never put this key in the React environment variables.
+
+### If deployment is delayed
+
+If you cannot deploy immediately (for example due to exhausted credits), keep the script ready and run `supabase/security-hardening-2026-08.sql` as your first SQL step on deployment day before exposing public traffic.
 
 ## Netlify deploy settings
 

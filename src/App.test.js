@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import App from './App';
+import { MemoryRouter } from 'react-router-dom';
+import PublicSidebar from './components/PublicSidebar';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('ANJK 3 is a single main-menu destination while Sports remains available', () => {
+  render(<MemoryRouter><PublicSidebar /></MemoryRouter>);
+  expect(screen.getByRole('link', { name: 'ANJK 3' })).toHaveAttribute('href', '/anjk-3');
+  expect(screen.getByRole('link', { name: 'Sports' })).toHaveAttribute('href', '/sports');
 });
