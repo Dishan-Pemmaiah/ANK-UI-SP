@@ -11,7 +11,7 @@ export default function HockeyMatchCard({ match, compact = false, basePath = '/a
   return <Paper sx={{ p: compact ? 1.5 : 2, border: '1px solid rgba(255,255,255,.12)', borderRadius: 3, bgcolor: '#171717' }}>
     <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
       <Typography variant="caption" sx={{ color: '#dcb99b' }}>{fixtureLabel(match) || 'Hockey'} · {new Date(match.scheduled_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })} IST</Typography>
-      <Chip size="small" label={match.status === 'Live' ? '● LIVE' : match.status} sx={{ bgcolor: match.status === 'Live' ? '#b30000' : '#333', color: '#fff', fontWeight: 800 }} />
+      <Chip size="small" label={match.status === 'Live' ? `● LIVE · ${match.phase || '1st Half'}` : match.status} sx={{ bgcolor: match.status === 'Live' ? '#b30000' : '#333', color: '#fff', fontWeight: 800 }} />
     </Stack>
     <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
       <Team team={match.home} />

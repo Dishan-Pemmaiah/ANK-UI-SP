@@ -25,3 +25,10 @@ test('Home shows next match when no match is live', async () => {
   expect(await screen.findByText('NEXT MATCH')).toBeInTheDocument();
   expect(screen.queryByText('● LIVE NOW')).not.toBeInTheDocument();
 });
+
+test('Home promotes latest result after the day finishes', async () => {
+  getSeasonData.mockResolvedValue({ season:{ name:'ANJK 3' }, matches:[fixture('Completed')], standings:[] });
+  renderPanel();
+  expect(await screen.findByText('LATEST RESULT')).toBeInTheDocument();
+  expect(screen.queryByText('NEXT MATCH')).not.toBeInTheDocument();
+});
