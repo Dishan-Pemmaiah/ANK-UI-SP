@@ -61,13 +61,17 @@ export default function Anjk3Page() {
   const liveEvents = (data?.events || []).filter((event) => ['Goal', 'Started', 'Phase Changed'].includes(event.event_type) && !event.is_voided && filteredByStatus(['Live']).some((match) => match.id === event.match_id));
   const controlPath = seasonSlug === 'anjk-3' ? '/admin/anjk-3' : `/admin/tournaments/${seasonSlug}`;
   return <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 6 }}>
-    <Paper sx={{ p: { xs: 2.5, md: 4 }, mb: 3, borderRadius: 4, background: 'linear-gradient(130deg,#271010,#101010 60%,#14201b)' }}>
-      <Typography variant="overline" sx={{ color: '#e0b08f', letterSpacing: 3 }}>ANJK Hockey Tournament</Typography>
-      <Typography component="h1" variant="h3" sx={{ fontWeight: 900 }}>{season?.name || seasonSlug.toUpperCase().replace(/-/g, ' ')}</Typography>
-      {season?.description && <Typography sx={{ mt: 1, color: '#ccc' }}>{season.description}</Typography>}
-      {season?.venue && <Typography sx={{ mt: 1 }}>📍 {season.venue}</Typography>}
-      {seasonDates && <Typography sx={{ mt: 1, fontWeight: 800 }}>📅 {seasonDates}</Typography>}
-      {season?.poster_url && <Box sx={{ mt: 2, textAlign: 'center', bgcolor: '#0c0c0c', borderRadius: 2, p: 1 }}><Box component="img" src={season.poster_url} alt={`${season.name} poster`} sx={{ display: 'block', width: 'auto', maxWidth: '100%', maxHeight: { xs: 620, md: 500 }, height: 'auto', objectFit: 'contain', mx: 'auto' }} /></Box>}
+    <Paper sx={{ p: { xs: 2, md: 3 }, mb: 2.5, borderRadius: 4, background: 'linear-gradient(130deg,#271010,#101010 60%,#14201b)' }}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} md={season?.poster_url ? 8 : 12}>
+          <Typography variant="overline" sx={{ color: '#e0b08f', letterSpacing: 2 }}>ANJK Hockey Tournament</Typography>
+          <Typography component="h1" sx={{ fontWeight: 900, fontSize: { xs: '1.65rem', sm: '2rem', md: '2.35rem' }, lineHeight: 1.12, overflowWrap: 'anywhere' }}>{season?.name || seasonSlug.toUpperCase().replace(/-/g, ' ')}</Typography>
+          {season?.description && <Typography sx={{ mt: 1, color: '#ccc' }}>{season.description}</Typography>}
+          {season?.venue && <Typography sx={{ mt: 1 }}>📍 {season.venue}</Typography>}
+          {seasonDates && <Typography sx={{ mt: 1, fontWeight: 800 }}>📅 {seasonDates}</Typography>}
+        </Grid>
+        {season?.poster_url && <Grid item xs={12} md={4}><Box sx={{ textAlign: 'center', bgcolor: '#0c0c0c', borderRadius: 2, p: 1 }}><Box component="img" src={season.poster_url} alt={`${season.name} poster`} sx={{ display: 'block', width: 'auto', maxWidth: '100%', maxHeight: { xs: 250, sm: 300, md: 330 }, height: 'auto', objectFit: 'contain', mx: 'auto' }} /></Box></Grid>}
+      </Grid>
     </Paper>
     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
     <Tabs value={tab} onChange={(_, value) => setParams({ tab: slug(value) })} variant="scrollable" scrollButtons="auto" sx={{ mb: 3, borderBottom: '1px solid #333' }}>{tabs.map((item) => <Tab key={item} value={item} label={item} />)}</Tabs>

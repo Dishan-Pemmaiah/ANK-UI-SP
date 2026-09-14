@@ -36,7 +36,8 @@ const SECTION_LINKS = [
   { key: 'external', label: 'Playing Other', path: '/sports/external' },
   { key: 'live', label: 'Live', path: '/sports/live' },
   { key: 'fixtures', label: 'Fixtures', path: '/sports/fixtures' },
-  { key: 'history', label: 'History', path: '/sports/history' }
+  { key: 'history', label: 'History', path: '/sports/history' },
+  { key: 'anjk3', label: 'ANJK 3 Hockey', path: '/anjk-3' }
 ];
 
 const normalizeStatus = (value) => {

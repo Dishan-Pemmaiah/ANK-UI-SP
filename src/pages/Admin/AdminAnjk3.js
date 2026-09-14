@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useParams, useSearchParams } from 'react-router-dom';
 import HockeyMatchCard from '../../components/HockeyMatchCard';
 import HockeyMatchControl from './HockeyMatchControl';
+import FixtureSchedulePicker from './FixtureSchedulePicker';
 import { controlMatch, correctGoal, correctResult, deleteAnnouncement, deleteMatch, deletePlayer, deleteTeam, getSeasonData, saveAnnouncement, saveMatch, savePlayer, saveSeason, saveTeam } from '../../services/hockeyService';
 import { istDateToIso, istLocalDateTimeToIso, toIstDate, toIstLocalDateTime } from '../../services/hockeyDates';
 
@@ -22,8 +21,6 @@ export default function AdminAnjk3() {
   const [teamForm, setTeamForm] = useState(blankTeam);
   const [playerForm, setPlayerForm] = useState(blankPlayer);
   const [matchForm, setMatchForm] = useState(blankMatch);
-  const fixtureDateRef = useRef(null);
-  const fixtureTimeRef = useRef(null);
   const [matchToDelete, setMatchToDelete] = useState(null);
   const [announcement, setAnnouncement] = useState(/** @type {{id?: string, title: string, body: string, is_published: boolean}} */ ({ title: '', body: '', is_published: true }));
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -53,18 +50,6 @@ export default function AdminAnjk3() {
   };
   const season = data?.season;
   const setSeasonField = (name, value) => setSeasonForm((prev) => ({ ...prev, [name]: value }));
-  const setFixtureDatePart = (part, value) => setMatchForm((prev) => {
-    const [date = '', time = ''] = prev.scheduled_at.split('T');
-    const nextDate = part === 'date' ? value : date;
-    const nextTime = part === 'time' ? value : time;
-    return { ...prev, scheduled_at: nextDate || nextTime ? `${nextDate}T${nextTime}` : '' };
-  });
-  const openPicker = (ref) => {
-    const input = ref.current;
-    if (!input) return;
-    try { if (typeof input.showPicker === 'function') input.showPicker(); else input.focus(); }
-    catch { input.focus(); }
-  };
   const confirmDeleteMatch = async () => {
     const target = matchToDelete;
     if (!target) return;
@@ -107,12 +92,7 @@ export default function AdminAnjk3() {
     {tab === 'Players' && <Stack spacing={2}><Paper sx={{ p: 2 }}><Typography variant="h6" sx={{ mb: 2 }}>{playerForm.id ? 'Edit player' : 'Add player'}</Typography><Stack spacing={2}><TextField fullWidth select size="small" label="Team" value={playerForm.team_id} onChange={(e) => setPlayerForm({ ...playerForm, team_id: e.target.value })}><MenuItem value="">Select team</MenuItem>{data?.teams.map((team) => <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>)}</TextField>{field('Player name', playerForm.name, (v) => setPlayerForm({ ...playerForm, name: v }))}{field('Jersey number', playerForm.shirt_number, (v) => setPlayerForm({ ...playerForm, shirt_number: v }), { type: 'number', inputProps: { min: 0, max: 99 } })}<Stack direction="row" spacing={1}><Button variant="contained" disabled={busy || !season || !playerForm.team_id || !playerForm.name.trim() || (playerForm.shirt_number !== '' && (Number(playerForm.shirt_number) < 0 || Number(playerForm.shirt_number) > 99))} onClick={savePlayerForm}>Save player</Button>{playerForm.id && <Button onClick={() => setPlayerForm(blankPlayer)}>Cancel edit</Button>}</Stack></Stack></Paper>{data?.teams.map((team) => <Paper key={team.id} sx={{ p: 2 }}><Typography variant="h6" sx={{ mb: 1 }}>{team.name}</Typography>{data.players.filter((player) => player.team_id === team.id).map((player) => <Stack key={player.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.5 }}><Typography>{player.shirt_number === null ? '—' : `#${player.shirt_number}`} · {player.name}</Typography><Stack direction="row"><Button onClick={() => setPlayerForm(player)}>Edit</Button><Button color="error" onClick={() => { if (window.confirm(`Delete ${player.name}?`)) run(() => deletePlayer(player.id), 'Player deleted.'); }}>Delete</Button></Stack></Stack>)}</Paper>)}</Stack>}
     {tab === 'Fixtures' && <Stack spacing={2}><Paper sx={{ p: 2 }}><Typography variant="h6" sx={{ mb: 2 }}>{matchForm.id ? 'Edit / reschedule fixture' : 'Create fixture'}</Typography><Grid container spacing={2}>
       {['home_team_id','away_team_id'].map((key) => <Grid item xs={12} sm={6} key={key}><TextField fullWidth select size="small" label={key === 'home_team_id' ? 'Team A' : 'Team B'} value={matchForm[key]} onChange={(e) => setMatchForm({ ...matchForm, [key]: e.target.value })}><MenuItem value="">Select team</MenuItem>{data?.teams.map((team) => <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>)}</TextField></Grid>)}
-      <Grid item xs={12}><Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
-        <TextField fullWidth size="small" type="date" label="Fixture date" InputLabelProps={{ shrink: true }} inputRef={fixtureDateRef} value={matchForm.scheduled_at.split('T')[0] || ''} onChange={(event) => setFixtureDatePart('date', event.target.value)} sx={{ '& input': { colorScheme: 'dark' }, '& input::-webkit-calendar-picker-indicator': { filter: 'brightness(0) invert(1)', opacity: 1, cursor: 'pointer' } }} />
-        <Button variant="outlined" color="inherit" startIcon={<CalendarMonthIcon />} onClick={() => openPicker(fixtureDateRef)} aria-label="Open fixture calendar" sx={{ minHeight: 40, whiteSpace: 'nowrap' }}>Calendar</Button>
-        <TextField fullWidth size="small" type="time" label="Start time (IST)" InputLabelProps={{ shrink: true }} inputRef={fixtureTimeRef} value={matchForm.scheduled_at.split('T')[1] || ''} onChange={(event) => setFixtureDatePart('time', event.target.value)} inputProps={{ step: 60 }} sx={{ '& input': { colorScheme: 'dark' }, '& input::-webkit-calendar-picker-indicator': { filter: 'brightness(0) invert(1)', opacity: 1, cursor: 'pointer' } }} />
-        <Button variant="outlined" color="inherit" startIcon={<AccessTimeIcon />} onClick={() => openPicker(fixtureTimeRef)} aria-label="Open fixture time picker" sx={{ minHeight: 40, whiteSpace: 'nowrap' }}>Time</Button>
-      </Stack><Typography variant="caption" color="text.secondary">Choose the match date and start time in Indian Standard Time.</Typography></Grid>
+      <Grid item xs={12} sm={6}><FixtureSchedulePicker value={matchForm.scheduled_at} onChange={(value) => setMatchForm((prev) => ({ ...prev, scheduled_at: value }))} /></Grid>
       <Grid item xs={12} sm={6}>{field('Venue',matchForm.venue,(v) => setMatchForm({ ...matchForm, venue:v }))}</Grid>
       <Grid item xs={12} sm={6}>{field('Pool',matchForm.pool,(v) => setMatchForm({ ...matchForm, pool:v }))}</Grid>
       <Grid item xs={12} sm={6}><TextField fullWidth select size="small" label="Stage" value={matchForm.stage} onChange={(e) => setMatchForm({ ...matchForm, stage:e.target.value })}>{['Group','League','Quarter Final','Semi Final','Final'].map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}</TextField></Grid>

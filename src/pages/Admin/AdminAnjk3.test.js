@@ -38,23 +38,24 @@ test('CMS live-match link opens Match Control with the requested match selected'
   expect(screen.getByRole('tab', { name: /match control/i })).toHaveAttribute('aria-selected', 'true');
 });
 
-test('fixture editor opens separate calendar and time pickers and saves IST date and time', async () => {
-  getSeasonData.mockResolvedValue({ ...data, matches: [fixture] });
+test('fixture editor selects date and time in one calendar dialog and saves IST', async () => {
+  getSeasonData.mockResolvedValue({ ...data, teams: [fixture.home, fixture.away], matches: [fixture] });
   saveMatch.mockResolvedValue(fixture);
   render(<MemoryRouter initialEntries={['/admin/anjk-3']}><Routes><Route path="/admin/anjk-3" element={<AdminAnjk3 />} /></Routes></MemoryRouter>);
   fireEvent.click(screen.getByRole('tab', { name: /fixtures/i }));
   fireEvent.click(await screen.findByRole('button', { name: 'Edit / reschedule' }));
-  const date = screen.getByLabelText('Fixture date');
-  const time = screen.getByLabelText('Start time (IST)');
-  expect(date).toHaveValue('2026-12-23');
-  expect(time).toHaveValue('11:50');
-  date.showPicker = jest.fn(); time.showPicker = jest.fn();
-  fireEvent.click(screen.getByRole('button', { name: 'Open fixture calendar' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Open fixture time picker' }));
-  expect(date.showPicker).toHaveBeenCalledTimes(1);
-  expect(time.showPicker).toHaveBeenCalledTimes(1);
-  fireEvent.change(date, { target: { value: '2026-12-24' } });
-  fireEvent.change(time, { target: { value: '14:30' } });
+  const picker = screen.getByRole('button', { name: 'Open fixture date and time picker' });
+  expect(picker).toHaveTextContent('23 Dec 2026 · 11:50 AM IST');
+  fireEvent.click(picker);
+  fireEvent.click(screen.getByRole('button', { name: '24 December 2026' }));
+  fireEvent.mouseDown(screen.getByLabelText('Hour'));
+  fireEvent.click(screen.getByRole('option', { name: '02' }));
+  fireEvent.change(screen.getByLabelText('Minute'), { target: { value: '30' } });
+  fireEvent.mouseDown(screen.getByLabelText('AM or PM'));
+  fireEvent.click(screen.getByRole('option', { name: 'PM' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Use date and time' }));
+  expect(picker).toHaveTextContent('24 Dec 2026 · 02:30 PM IST');
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   fireEvent.click(screen.getByRole('button', { name: 'Save fixture' }));
   await waitFor(() => expect(saveMatch).toHaveBeenCalledWith(expect.objectContaining({ scheduled_at: '2026-12-24T09:00:00.000Z' }), 'match-1'));
   expect(await screen.findByText('Fixture saved.')).toBeInTheDocument();

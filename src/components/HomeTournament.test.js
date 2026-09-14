@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import HomeTournament from './HomeTournament';
 import { getSeasonData } from '../services/hockeyService';
 
@@ -15,6 +15,7 @@ test('Home promotes live score and match link', async () => {
   getSeasonData.mockResolvedValue({ season:{ name:'ANJK 3' }, matches:[fixture('Live')], standings:[] });
   renderPanel();
   expect(await screen.findByText('● LIVE NOW')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Explore ANJK 3 tournament' })).toHaveAttribute('href', '/anjk-3');
   expect(screen.getByRole('link', { name: '● LIVE NOW' })).toHaveAttribute('href', '/anjk-3?tab=live#match-match-1');
   expect(screen.getByText('2 – 1')).toBeInTheDocument();
   expect(screen.getByRole('link', { name:'View Match' })).toHaveAttribute('href','/anjk-3?tab=live#match-match-1');
@@ -32,4 +33,12 @@ test('Home promotes latest result after the day finishes', async () => {
   renderPanel();
   expect(await screen.findByText('LATEST RESULT')).toBeInTheDocument();
   expect(screen.queryByText('NEXT MATCH')).not.toBeInTheDocument();
+});
+
+test('clicking the Home poster opens ANJK 3 while Explore remains a link', async () => {
+  getSeasonData.mockResolvedValue({ season: { name: 'ANJK 3', poster_url: '/anjk3/anjk3-poster.jpg', starts_at: '2026-12-23T00:00:00+05:30' }, matches: [], standings: [] });
+  render(<MemoryRouter initialEntries={['/']}><Routes><Route path="/" element={<HomeTournament />} /><Route path="/anjk-3" element={<div>Tournament destination</div>} /></Routes></MemoryRouter>);
+  expect(await screen.findByRole('link', { name: 'Explore' })).toHaveAttribute('href', '/anjk-3');
+  fireEvent.click(screen.getByAltText('ANJK 3 poster'));
+  expect(await screen.findByText('Tournament destination')).toBeInTheDocument();
 });

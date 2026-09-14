@@ -31,7 +31,8 @@ const SECTION_LINKS = [
   { key: 'external', label: 'Playing Other', path: '/admin/sports/external' },
   { key: 'live', label: 'Live Desk', path: '/admin/sports/live' },
   { key: 'fixtures', label: 'Fixtures', path: '/admin/sports/fixtures' },
-  { key: 'history', label: 'History', path: '/admin/sports/history' }
+  { key: 'history', label: 'History', path: '/admin/sports/history' },
+  { key: 'anjk3', label: 'ANJK 3 Hockey', path: '/admin/anjk-3' }
 ];
 
 const emptyPointsRow = { team: '', played: '', won: '', lost: '', points: '', nrr: '' };
@@ -357,7 +358,7 @@ export default function AdminSports() {
     <Box>
       <Typography variant="h4" gutterBottom>Sports Admin</Typography>
       <Typography sx={{ opacity: 0.85, mb: 2 }}>
-        Section-based saves. Use separate admin pages for hosted, external, live, fixtures, and history records.
+        Manage hosted, external, live, fixtures, history, and ANJK 3 hockey from here.
       </Typography>
 
       <Paper sx={{ p: 1.2, background: '#141414', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 2.5, mb: 3 }}>
