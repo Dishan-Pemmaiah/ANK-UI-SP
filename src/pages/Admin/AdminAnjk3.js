@@ -6,7 +6,7 @@ import HockeyMatchControl from './HockeyMatchControl';
 import HockeyKnockoutAdmin from './HockeyKnockoutAdmin';
 import HockeyDrawAdmin from './HockeyDrawAdmin';
 import FixtureSchedulePicker from './FixtureSchedulePicker';
-import { advanceWinner, assignBye, completeKnockoutMatch, controlMatch, correctGoal, correctKnockoutResult, correctResult, deleteAnnouncement, deleteMatch, deletePlayer, deleteRound, deleteTeam, getSeasonData, removeAdvancement, saveAnnouncement, saveMatch, savePlayer, saveRound, saveSeason, saveTeam, setKnockoutWinner, setProgression } from '../../services/hockeyService';
+import { completeKnockoutMatch, controlMatch, correctGoal, correctKnockoutResult, correctResult, deleteAnnouncement, deleteMatch, deletePlayer, deleteRound, deleteTeam, getSeasonData, removeAdvancement, saveAnnouncement, saveMatch, savePlayer, saveRound, saveSeason, saveTeam, setProgression } from '../../services/hockeyService';
 import { istDateToIso, istLocalDateTimeToIso, toIstDate, toIstLocalDateTime } from '../../services/hockeyDates';
 import { deleteDraftDraw, setDrawPublication, updateDrawMetadata, uploadDrawRevision } from '../../services/hockeyDrawDocuments';
 
@@ -79,14 +79,6 @@ export default function AdminAnjk3() {
   const selectMatch = (match) => { setSelectedMatch(match); if (match) setCorrect({ home: match.home_score, away: match.away_score }); };
   const isKnockoutMatch = (match) => season?.tournament_format === 'Knockout' || (season?.tournament_format === 'Mixed' && Boolean(match?.round_id || !['Group', 'League'].includes(match?.stage)));
   const knockoutMatches = (data?.matches || []).filter(isKnockoutMatch);
-  const moveRound = (round, direction) => {
-    const ordered = [...(data?.rounds || [])].sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-    const index = ordered.findIndex((item) => item.id === round.id);
-    const other = ordered[index + direction];
-    if (!other) return;
-    [ordered[index], ordered[index + direction]] = [other, round];
-    return run(async () => { for (let position = 0; position < ordered.length; position += 1) await saveRound({ sort_order: position + 1 }, ordered[position].id); }, 'Round order updated.');
-  };
   const field = (label, value, onChange, props = {}) => <TextField fullWidth size="small" label={label} value={value ?? ''} onChange={(event) => onChange(event.target.value)} {...props} />;
   return <Box sx={{ maxWidth: 1100, mx: 'auto', pb: 8 }}>
     <Typography variant="h4" sx={{ fontWeight: 900, mb: 1 }}>{season?.name || 'Hockey'} CMS</Typography>
@@ -120,14 +112,12 @@ export default function AdminAnjk3() {
     {tab === 'Knockout Management' && <HockeyKnockoutAdmin season={season} teams={data?.teams || []} matches={knockoutMatches} rounds={data?.rounds || []} advancements={data?.advancements || []} busy={busy}
       onSaveRound={(payload, id) => run(() => saveRound(payload, id), id ? 'Round saved.' : 'Round added.')}
       onDeleteRound={(id) => run(() => deleteRound(id), 'Unused round deleted.')}
-      onMoveRound={moveRound}
+      onAddFixture={(round) => { setMatchForm({ ...blankMatch, round_id:round.id, stage:'Knockout' }); setTab('Fixtures'); }}
       onEditFixture={(match) => { setMatchForm({ ...match, scheduled_at: toIstLocalDateTime(match.scheduled_at) }); setTab('Fixtures'); }}
+      onDeleteFixture={(match) => setMatchToDelete(match)}
       onControlMatch={(match) => { selectMatch(match); setTab('Match Control'); }}
-      onSetProgression={(source, target, slot, automatic) => run(() => setProgression(source, target, slot, automatic), target ? 'Next match assigned.' : 'Progression left undecided.')}
-      onAdvanceWinner={(source, target, slot) => run(() => advanceWinner(source, target, slot), 'Winner advanced to the target fixture.')}
-      onAssignBye={(team, target, slot, note) => run(() => assignBye(team, target, slot, note), 'Bye assigned and recorded.')}
       onRemoveAdvancement={(id) => run(() => removeAdvancement(id), 'Advancement removed from the unstarted fixture.')}
-      onSetWinner={(id, winner, method, home, away) => run(() => setKnockoutWinner(id, winner, method, home, away), 'Knockout winner corrected.')}
+      onClearPendingLink={(id) => run(() => setProgression(id,null,null,false), 'Pending next-match link cleared.')}
       onSetChampion={(teamId) => run(async () => { await saveSeason({ champion_team_id: teamId }, season.id); setSeasonForm((prev) => ({ ...prev, champion_team_id: teamId })); }, 'Champion saved.')} />}
     {tab === 'Draw / Ties' && <HockeyDrawAdmin season={season} documents={data?.drawDocuments || []} busy={busy}
       onUpload={(file,metadata) => run(() => uploadDrawRevision(season.id,file,metadata),'New draw revision uploaded as a draft.')}

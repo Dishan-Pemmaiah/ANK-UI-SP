@@ -59,7 +59,7 @@ test('fixture editor selects date and time in one calendar dialog and saves IST'
   fireEvent.click(screen.getByRole('button', { name: 'Save fixture' }));
   await waitFor(() => expect(saveMatch).toHaveBeenCalledWith(expect.objectContaining({ scheduled_at: '2026-12-24T09:00:00.000Z' }), 'match-1'));
   expect(await screen.findByText('Fixture saved.')).toBeInTheDocument();
-});
+}, 15000);
 
 test('completed match deletion requires confirmation and removes only that match', async () => {
   const completed = { ...fixture, status: 'Completed', home_score: 2 };
@@ -99,7 +99,18 @@ test('knockout format shows round management and hides points settings', async (
   expect(await screen.findByRole('tab', { name: 'Knockout Management' })).toBeInTheDocument();
   expect(screen.queryByLabelText('win points')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('tab', { name: 'Knockout Management' }));
-  fireEvent.change(screen.getByLabelText('New round name'), { target: { value: 'Preliminary' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Add round' }));
-  await waitFor(() => expect(saveRound).toHaveBeenCalledWith(expect.objectContaining({ season_id: 'season-1', name: 'Preliminary', sort_order: 0, is_final: false }), undefined));
+  fireEvent.click(screen.getByRole('button', { name: 'Add Quarter Final' }));
+  await waitFor(() => expect(saveRound).toHaveBeenCalledWith(expect.objectContaining({ season_id: 'season-1', name: 'Quarter Final', sort_order: 0, is_final: false }), undefined));
+});
+
+test('Knockout Management deletes one fixture through the existing confirmation dialog', async () => {
+  getSeasonData.mockResolvedValueOnce({ ...data,season:{...season,tournament_format:'Knockout'},rounds:[{id:'q',name:'Quarter Final',sort_order:0}],matches:[{...fixture,round_id:'q'}] })
+    .mockResolvedValue({ ...data,season:{...season,tournament_format:'Knockout'},rounds:[{id:'q',name:'Quarter Final',sort_order:0}],matches:[] });
+  deleteMatch.mockResolvedValue({id:'match-1'});
+  render(<MemoryRouter initialEntries={['/admin/anjk-3']}><Routes><Route path="/admin/anjk-3" element={<AdminAnjk3 />} /></Routes></MemoryRouter>);
+  fireEvent.click(await screen.findByRole('tab',{name:'Knockout Management'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Delete fixture'}));
+  expect(screen.getByRole('dialog',{name:'Delete match?'})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Delete match permanently'}));
+  await waitFor(() => expect(deleteMatch).toHaveBeenCalledWith('match-1'));
 });

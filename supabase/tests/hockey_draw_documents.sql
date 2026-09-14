@@ -1,5 +1,11 @@
 -- Run as database owner after the draw-documents migration. Everything rolls back.
 begin;
+do $$ begin
+  if not exists (select 1 from pg_trigger where tgname='hockey_document_delete_guard' and not tgisinternal) then
+    raise exception 'Apply the live-repair migration before this test: published-history guard missing'; end if;
+  if to_regprocedure('public.hockey_correct_knockout_result(uuid,integer,integer,uuid,text,integer,integer)') is null then
+    raise exception 'Apply the live-repair migration before this test: knockout correction RPC missing'; end if;
+end $$;
 create or replace function public.is_admin() returns boolean language sql stable as $$
   select current_setting('role') <> 'anon'
 $$;
