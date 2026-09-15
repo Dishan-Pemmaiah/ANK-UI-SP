@@ -9,6 +9,12 @@ jest.mock('../../services/hockeyService', () => ({
   correctResult: jest.fn(), saveAnnouncement: jest.fn(), deleteAnnouncement: jest.fn(), saveRound: jest.fn()
 }));
 
+const cmsTabFinders = {
+  button: (name) => screen.findByRole('button',{name}),
+  heading: (name) => screen.findByRole('heading',{name}),
+  label: (name) => screen.findByLabelText(name)
+};
+
 const season = { id:'season-1', slug:'anjk-3', name:'ANJK 3', starts_at:null, ends_at:null,
   description:'', venue:'', poster_url:'', win_points:3, draw_points:1, loss_points:0 };
 const data = { season, teams:[], players:[], matches:[], events:[], standings:[], announcements:[] };
@@ -113,4 +119,22 @@ test('Knockout Management deletes one fixture through the existing confirmation 
   expect(screen.getByRole('dialog',{name:'Delete match?'})).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Delete match permanently'}));
   await waitFor(() => expect(deleteMatch).toHaveBeenCalledWith('match-1'));
+});
+
+test.each([
+  ['Tournament','button','Save tournament'],
+  ['Draw / Ties','heading','New Draw / Ties revision'],
+  ['Teams','heading','Add team'],
+  ['Players','heading','Add player'],
+  ['Fixtures','heading','Create fixture'],
+  ['Knockout Management','heading','Knockout rounds'],
+  ['Match Control','label','Select match'],
+  ['Announcements','label','Visibility']
+])('CMS %s tab loads its expected controls', async (tabName,expectedKind,expectedName) => {
+  getSeasonData.mockResolvedValue({ ...data, season:{...season,tournament_format:'Knockout'}, rounds:[], advancements:[], drawDocuments:[] });
+  render(<MemoryRouter initialEntries={['/admin/anjk-3']}><Routes><Route path="/admin/anjk-3" element={<AdminAnjk3 />} /></Routes></MemoryRouter>);
+  const tab=await screen.findByRole('tab',{name:tabName});
+  fireEvent.click(tab);
+  expect(tab).toHaveAttribute('aria-selected','true');
+  expect(await cmsTabFinders[expectedKind](expectedName)).toBeInTheDocument();
 });

@@ -67,7 +67,7 @@ export const deletePlayer = async (id) => unwrap(await table('hockey_players').d
 export const saveMatch = async (payload, id) => unwrap(await (id
   ? table('hockey_matches').update(payload).eq('id', id).select('*').single()
   : table('hockey_matches').insert(payload).select('*').single()));
-export const deleteMatch = async (id) => unwrap(await table('hockey_matches').delete().eq('id', id).select('id').single());
+export const deleteMatch = async (id) => unwrap(await supabase.rpc('hockey_delete_match', { p_match_id: id }));
 export const saveAnnouncement = async (payload, id) => unwrap(await (id
   ? table('hockey_announcements').update(payload).eq('id', id).select('*').single()
   : table('hockey_announcements').insert(payload).select('*').single()));

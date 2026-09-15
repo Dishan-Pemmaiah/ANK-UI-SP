@@ -22,11 +22,9 @@ test('creates season, team, and fixture in separate tables', async () => {
 });
 
 test('deletes only the selected hockey match', async () => {
-  const chain = query({ id: 'match-1' }); supabase.from.mockReturnValue(chain);
+  supabase.rpc.mockResolvedValue({ data: 'match-1', error: null });
   await deleteMatch('match-1');
-  expect(supabase.from).toHaveBeenCalledWith('hockey_matches');
-  expect(chain.delete).toHaveBeenCalledTimes(1);
-  expect(chain.eq).toHaveBeenCalledWith('id', 'match-1');
+  expect(supabase.rpc).toHaveBeenCalledWith('hockey_delete_match', { p_match_id: 'match-1' });
 });
 
 test('start, phase, scorer and quick goals, undo, end, postpone, cancel and correction use database actions', async () => {

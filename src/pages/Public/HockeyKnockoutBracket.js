@@ -27,9 +27,17 @@ function Fixture({ match, basePath, roundName }) {
 export default function HockeyKnockoutBracket({ rounds = [], matches = [], teams = [], championId, basePath = '/anjk-3' }) {
   const ordered=sortKnockoutRounds(rounds);
   const unassigned=matches.filter((match) => !match.round_id || !rounds.some((round) => round.id===match.round_id));
-  const columns=[...ordered.map((round) => ({id:round.id,name:roundPosition(round.name)<4?SIMPLE_KNOCKOUT_ROUNDS[roundPosition(round.name)]:round.name,
-    matches:matches.filter((match) => match.round_id===round.id).sort((a,b) => (a.match_number || 9999)-(b.match_number || 9999))})),
-    ...(unassigned.length?[{id:'legacy',name:'Other / unassigned fixtures',matches:unassigned}]:[])];
+  const columns=ordered.reduce((result,round) => {
+    const position=roundPosition(round.name);
+    const name=position<4?SIMPLE_KNOCKOUT_ROUNDS[position]:round.name;
+    const roundMatches=matches.filter((match) => match.round_id===round.id);
+    const existing=position<4?result.find((column) => column.position===position):null;
+    if (existing) existing.matches.push(...roundMatches);
+    else result.push({id:position<4?`standard-${position}`:round.id,name,position,matches:roundMatches});
+    return result;
+  },[]);
+  columns.forEach((column) => column.matches.sort((a,b) => (a.match_number || 9999)-(b.match_number || 9999)));
+  if (unassigned.length) columns.push({id:'legacy',name:'Other / unassigned fixtures',matches:unassigned});
   const champion=teams.find((team) => team.id===championId);
   if (!columns.length) return <Typography color="text.secondary">Knockout rounds will appear when the organizer adds them.</Typography>;
   return <Box sx={{minWidth:0}}><Typography variant="h5" sx={{mb:2}}>Knockout rounds</Typography>

@@ -34,3 +34,16 @@ test('unused round deletes after confirmation and legacy placements can be clear
   fireEvent.click(screen.getByRole('button',{name:'Clear placement'}));
   expect(onRemoveAdvancement).toHaveBeenCalledWith('adv');
 });
+
+test('champion can be overridden or cleared from knockout management', () => {
+  const onSetChampion=jest.fn();
+  const {rerender}=render(<MemoryRouter><HockeyKnockoutAdmin season={{id:'s'}} teams={teams} rounds={[]} matches={[]} busy={false} onSetChampion={onSetChampion} /></MemoryRouter>);
+  fireEvent.mouseDown(screen.getByLabelText('Champion'));
+  fireEvent.click(screen.getByRole('option',{name:'Alpha'}));
+  fireEvent.click(screen.getByRole('button',{name:'Save champion'}));
+  expect(onSetChampion).toHaveBeenCalledWith('a');
+
+  rerender(<MemoryRouter><HockeyKnockoutAdmin season={{id:'s',champion_team_id:'a'}} teams={teams} rounds={[]} matches={[]} busy={false} onSetChampion={onSetChampion} /></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button',{name:'Clear champion'}));
+  expect(onSetChampion).toHaveBeenLastCalledWith(null);
+});

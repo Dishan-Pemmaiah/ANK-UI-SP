@@ -6,11 +6,53 @@ import AuthContext from '../../context/AuthContext';
 
 jest.mock('../../services/hockeyService', () => ({ getSeasonData: jest.fn() }));
 
+const publicTabFinders = {
+  button: (name) => screen.findByRole('button',{name}),
+  heading: (name) => screen.findByRole('heading',{name}),
+  table: (name) => screen.findByRole('table',{name}),
+  link: (name) => screen.findByRole('link',{name}),
+  text: (name) => screen.findByText(name),
+  label: (name) => screen.findByLabelText(name)
+};
+
 const match = {
   id: 'match-1', status: 'Completed', stage: 'Group', pool: 'A',
   scheduled_at: '2026-09-14T10:00:00+05:30', home_score: 2, away_score: 1,
   home: { id: 'a', name: 'Alpha' }, away: { id: 'b', name: 'Bravo' }
 };
+
+const tabData = {
+  season: { id:'season-1',name:'ANJK 3',tournament_format:'Mixed',champion_team_id:'a' },
+  teams: [{id:'a',name:'Alpha',pool:'A'},{id:'b',name:'Bravo',pool:'A'}],
+  players: [{id:'p',team_id:'a',name:'Player One',shirt_number:7}],
+  rounds: [{id:'q',name:'Quarter Final',sort_order:0}], advancements: [],
+  matches: [
+    {...match,id:'completed',round_id:'q',winner_team_id:'a',decision_method:'Normal'},
+    {...match,id:'live',status:'Live',scheduled_at:'2026-09-15T10:00:00+05:30'},
+    {...match,id:'upcoming',status:'Upcoming',scheduled_at:'2026-09-16T10:00:00+05:30'}
+  ],
+  standings: [{team_id:'a',team_name:'Alpha',pool:'A',played:1,won:1,drawn:0,lost:0,goals_for:2,goals_against:1,goal_difference:1,points:3}],
+  announcements: [],
+  events: [{id:'goal',match_id:'live',team_id:'a',player_id:'p',event_type:'Goal',is_voided:false,created_at:'2026-09-15T10:05:00+05:30'}],
+  drawDocuments: []
+};
+
+test.each([
+  ['overview','Overview','button','Refresh tournament'],
+  ['draw','Draw / Ties','heading','Official Draw / Ties'],
+  ['fixtures','Fixtures','label','Open calendar'],
+  ['live','Live','link','Control Alpha vs Bravo in CMS'],
+  ['results','Results','text','Showing all dates, pools and stages'],
+  ['points-table','Points Table','table','Hockey points table'],
+  ['knockouts','Knockouts','heading','Knockout rounds'],
+  ['teams','Teams','label','Search teams'],
+  ['stats','Stats','heading','Tournament Stats']
+])('public %s tab loads its expected content', async (queryTab,tabName,expectedKind,expectedName) => {
+  getSeasonData.mockResolvedValue(tabData);
+  render(<AuthContext.Provider value={{isAdmin:true}}><MemoryRouter initialEntries={[`/anjk-3?tab=${queryTab}`]}><Routes><Route path="/anjk-3" element={<Anjk3Page />} /></Routes></MemoryRouter></AuthContext.Provider>);
+  expect(await screen.findByRole('tab',{name:tabName})).toHaveAttribute('aria-selected','true');
+  expect(await publicTabFinders[expectedKind](expectedName)).toBeInTheDocument();
+});
 
 test('calendar opens and Clear filters restores results and clears the date input', async () => {
   getSeasonData.mockResolvedValue({
