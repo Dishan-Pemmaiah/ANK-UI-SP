@@ -4,6 +4,7 @@ import { Box, Drawer } from '@mui/material';
 import Navbar from './Navbar';
 import PublicSidebar from './PublicSidebar';
 import SiteFooter from './SiteFooter';
+import TournamentBanner from './TournamentBanner';
 
 const drawerWidth = 260;
 
@@ -74,8 +75,11 @@ export default function MainLayout() {
             </Box>
           </Box>
           <SiteFooter />
+          {/* Spacer so fixed banner doesn't overlap footer on mobile */}
+          <Box sx={{ display: { xs: 'block', md: 'none' }, height: 60 }} />
         </Box>
       </Box>
+      <TournamentBanner />
     </>
   );
 }

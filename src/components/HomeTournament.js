@@ -7,6 +7,25 @@ import { getTournamentState } from '../services/tournamentState';
 import { formatSeasonDates } from '../services/hockeyDates';
 import { hockeyRefreshDelay } from '../services/hockeyRefresh';
 
+const FALLBACK_SEASON_DATA = {
+  season: {
+    id: 'anjk-3',
+    slug: 'anjk-3',
+    name: "ANJIGERI NAAD KODAVA FAMILY HOCKEY NAMME 7'A SIDE",
+    starts_at: '2026-12-23T09:00:00+05:30',
+    ends_at: '2026-12-29T18:00:00+05:30',
+    poster_url: '/anjk3/anjk3-poster.jpg'
+  },
+  matches: [],
+  standings: [],
+  rounds: [],
+  advancements: [],
+  announcements: [],
+  players: [],
+  events: [],
+  drawDocuments: []
+};
+
 export default function HomeTournament() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
@@ -14,7 +33,12 @@ export default function HomeTournament() {
     let active = true; let timer;
     const load = async () => {
       let next;
-      try { next = await getSeasonData(); if (active) setData(next); } catch (_) { /* Retry on the next interval. */ }
+      try {
+        next = await getSeasonData();
+        if (active) setData(next?.season ? next : FALLBACK_SEASON_DATA);
+      } catch (_) {
+        if (active) setData(FALLBACK_SEASON_DATA);
+      }
       if (active) timer = setTimeout(load, hockeyRefreshDelay(next?.matches));
     };
     load();
